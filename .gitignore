@@ -1,0 +1,14 @@
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+frontend/dist/
+# generated state, rebuilt by: python -m layer1.bulk_ingest --reset
+layer1/uploads/
+layer1/staging/
+layer1/stores/
+*.jsonl
+# the brief is course material, not ours to republish
+architecture/watson.pdf
+resources/

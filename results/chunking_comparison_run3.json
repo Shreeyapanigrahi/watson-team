@@ -1,0 +1,199 @@
+{
+  "retrieval": "TF-IDF cosine (lexical stand-in; re-run with MiniLM embeddings in Layer 2)",
+  "documents_indexed": 42,
+  "queries": 6,
+  "strategies": {
+    "A_fixed_256": {
+      "chunk_count": 126,
+      "mean_tokens": 219.6,
+      "min_tokens": 57,
+      "max_tokens": 256,
+      "top1_relevant": "4/6",
+      "top3_relevant": "10/18",
+      "per_query": [
+        {
+          "query_id": "C1",
+          "query": "What do EU oncologists think about Opdivra tolerability?",
+          "top1_relevant": false,
+          "top3_relevant": 1,
+          "top1_document": "study_015.pdf",
+          "top1_chunk_tokens": 256,
+          "top1_score": 0.254
+        },
+        {
+          "query_id": "C2",
+          "query": "Reimbursement agreement for Keytrava in Germany",
+          "top1_relevant": true,
+          "top3_relevant": 3,
+          "top1_document": "study_028.pdf",
+          "top1_chunk_tokens": 256,
+          "top1_score": 0.3
+        },
+        {
+          "query_id": "C3",
+          "query": "Market share of brands in plaque psoriasis in the EU",
+          "top1_relevant": true,
+          "top3_relevant": 2,
+          "top1_document": "study_017.pdf",
+          "top1_chunk_tokens": 256,
+          "top1_score": 0.423
+        },
+        {
+          "query_id": "C4",
+          "query": "Unmet need in EGFR-mutant NSCLC",
+          "top1_relevant": true,
+          "top3_relevant": 1,
+          "top1_document": "study_021.docx",
+          "top1_chunk_tokens": 186,
+          "top1_score": 0.513
+        },
+        {
+          "query_id": "C5",
+          "query": "Key opinion leader view on Aimovia tolerability",
+          "top1_relevant": false,
+          "top3_relevant": 1,
+          "top1_document": "study_034.docx",
+          "top1_chunk_tokens": 133,
+          "top1_score": 0.23
+        },
+        {
+          "query_id": "C6",
+          "query": "Late-stage immunology pipeline targeting IL-17 and IL-23",
+          "top1_relevant": true,
+          "top3_relevant": 2,
+          "top1_document": "study_044.pptx",
+          "top1_chunk_tokens": 256,
+          "top1_score": 0.36
+        }
+      ]
+    },
+    "A_fixed_512": {
+      "chunk_count": 74,
+      "mean_tokens": 359.5,
+      "min_tokens": 105,
+      "max_tokens": 512,
+      "top1_relevant": "4/6",
+      "top3_relevant": "7/18",
+      "per_query": [
+        {
+          "query_id": "C1",
+          "query": "What do EU oncologists think about Opdivra tolerability?",
+          "top1_relevant": false,
+          "top3_relevant": 0,
+          "top1_document": "study_015.pdf",
+          "top1_chunk_tokens": 512,
+          "top1_score": 0.232
+        },
+        {
+          "query_id": "C2",
+          "query": "Reimbursement agreement for Keytrava in Germany",
+          "top1_relevant": true,
+          "top3_relevant": 2,
+          "top1_document": "study_028.pdf",
+          "top1_chunk_tokens": 512,
+          "top1_score": 0.261
+        },
+        {
+          "query_id": "C3",
+          "query": "Market share of brands in plaque psoriasis in the EU",
+          "top1_relevant": true,
+          "top3_relevant": 1,
+          "top1_document": "study_017.pdf",
+          "top1_chunk_tokens": 328,
+          "top1_score": 0.425
+        },
+        {
+          "query_id": "C4",
+          "query": "Unmet need in EGFR-mutant NSCLC",
+          "top1_relevant": true,
+          "top3_relevant": 1,
+          "top1_document": "study_021.docx",
+          "top1_chunk_tokens": 186,
+          "top1_score": 0.522
+        },
+        {
+          "query_id": "C5",
+          "query": "Key opinion leader view on Aimovia tolerability",
+          "top1_relevant": false,
+          "top3_relevant": 1,
+          "top1_document": "study_034.docx",
+          "top1_chunk_tokens": 132,
+          "top1_score": 0.262
+        },
+        {
+          "query_id": "C6",
+          "query": "Late-stage immunology pipeline targeting IL-17 and IL-23",
+          "top1_relevant": true,
+          "top3_relevant": 2,
+          "top1_document": "study_044.pptx",
+          "top1_chunk_tokens": 320,
+          "top1_score": 0.343
+        }
+      ]
+    },
+    "B_structural": {
+      "chunk_count": 179,
+      "mean_tokens": 130.2,
+      "min_tokens": 14,
+      "max_tokens": 422,
+      "top1_relevant": "4/6",
+      "top3_relevant": "7/18",
+      "per_query": [
+        {
+          "query_id": "C1",
+          "query": "What do EU oncologists think about Opdivra tolerability?",
+          "top1_relevant": false,
+          "top3_relevant": 1,
+          "top1_document": "study_013.pptx",
+          "top1_chunk_tokens": 53,
+          "top1_score": 0.394
+        },
+        {
+          "query_id": "C2",
+          "query": "Reimbursement agreement for Keytrava in Germany",
+          "top1_relevant": true,
+          "top3_relevant": 1,
+          "top1_document": "study_028.pdf",
+          "top1_chunk_tokens": 339,
+          "top1_score": 0.262
+        },
+        {
+          "query_id": "C3",
+          "query": "Market share of brands in plaque psoriasis in the EU",
+          "top1_relevant": false,
+          "top3_relevant": 1,
+          "top1_document": "study_018.pptx",
+          "top1_chunk_tokens": 64,
+          "top1_score": 0.388
+        },
+        {
+          "query_id": "C4",
+          "query": "Unmet need in EGFR-mutant NSCLC",
+          "top1_relevant": true,
+          "top3_relevant": 1,
+          "top1_document": "study_021.docx",
+          "top1_chunk_tokens": 37,
+          "top1_score": 0.505
+        },
+        {
+          "query_id": "C5",
+          "query": "Key opinion leader view on Aimovia tolerability",
+          "top1_relevant": true,
+          "top3_relevant": 1,
+          "top1_document": "study_034.docx",
+          "top1_chunk_tokens": 241,
+          "top1_score": 0.202
+        },
+        {
+          "query_id": "C6",
+          "query": "Late-stage immunology pipeline targeting IL-17 and IL-23",
+          "top1_relevant": true,
+          "top3_relevant": 2,
+          "top1_document": "study_044.pptx",
+          "top1_chunk_tokens": 25,
+          "top1_score": 0.708
+        }
+      ]
+    }
+  }
+}

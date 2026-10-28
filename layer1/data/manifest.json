@@ -1,0 +1,1509 @@
+[
+  {
+    "year": 2021,
+    "region": "EU",
+    "n": 320,
+    "fmt": "pdf",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Opdivra"
+    ],
+    "richness": "high",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Daniel Hartwell",
+    "report_date": "2021-11-04",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Opdivra",
+        "region": "EU",
+        "year": 2021,
+        "score": 0.69
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (EU, 2021)",
+    "filename": "study_001.pdf",
+    "planted": {},
+    "ingest_age": 700
+  },
+  {
+    "year": 2022,
+    "region": "US",
+    "n": 210,
+    "fmt": "docx",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Opdivra"
+    ],
+    "richness": "med",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Mei Tanaka",
+    "report_date": "2022-05-14",
+    "sensitivity": "RESTRICTED",
+    "sentiment": [
+      {
+        "brand": "Opdivra",
+        "region": "US",
+        "year": 2022,
+        "score": 0.77
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (US, 2022)",
+    "filename": "study_002.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2023,
+    "region": "EU",
+    "n": 300,
+    "fmt": "pdf",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Opdivra"
+    ],
+    "richness": "high",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Sofia Albrecht",
+    "report_date": "2023-07-15",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Opdivra",
+        "region": "EU",
+        "year": 2023,
+        "score": 0.27
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (EU, 2023)",
+    "filename": "study_003.pdf",
+    "planted": {},
+    "ingest_age": 745
+  },
+  {
+    "year": 2024,
+    "region": "US",
+    "n": 45,
+    "fmt": "docx",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Opdivra"
+    ],
+    "richness": "med",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Rahul Desai",
+    "report_date": "2024-02-21",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Opdivra",
+        "region": "US",
+        "year": 2024,
+        "score": 0.26
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (US, 2024)",
+    "filename": "study_004.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2022,
+    "region": "EU",
+    "n": 350,
+    "fmt": "pdf",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Cosentex"
+    ],
+    "richness": "high",
+    "indication": "plaque psoriasis",
+    "therapeutic_area": "Immunology",
+    "author": "Greta Lindholm",
+    "report_date": "2022-06-14",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Cosentex",
+        "region": "EU",
+        "year": 2022,
+        "score": 0.7
+      }
+    ],
+    "indications": [
+      "plaque psoriasis"
+    ],
+    "title": "HCP Perception Survey: Cosentex in plaque psoriasis (EU, 2022)",
+    "filename": "study_005.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2024,
+    "region": "EU",
+    "n": 120,
+    "fmt": "pdf",
+    "scanned": true,
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Cosentex"
+    ],
+    "richness": "med",
+    "indication": "plaque psoriasis",
+    "therapeutic_area": "Immunology",
+    "author": "Omar Faruk",
+    "report_date": "2024-08-01",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Cosentex",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.35
+      }
+    ],
+    "indications": [
+      "plaque psoriasis"
+    ],
+    "title": "HCP Perception Survey: Cosentex in plaque psoriasis (EU, 2024)",
+    "filename": "study_006.pdf",
+    "planted": {
+      "scanned_pdf": true
+    },
+    "ingest_age": null
+  },
+  {
+    "year": 2023,
+    "region": "US",
+    "n": 500,
+    "fmt": "docx",
+    "near_dup_source": true,
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Keytrava"
+    ],
+    "richness": "high",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Hannah Weiss",
+    "report_date": "2023-09-14",
+    "sensitivity": "RESTRICTED",
+    "sentiment": [
+      {
+        "brand": "Keytrava",
+        "region": "US",
+        "year": 2023,
+        "score": 0.73
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "HCP Perception Survey: Keytrava in non-small cell lung cancer (US, 2023)",
+    "filename": "study_007.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2023,
+    "region": "EU",
+    "n": 280,
+    "fmt": "pdf",
+    "no_author": true,
+    "show_title": false,
+    "meta_title": false,
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Keytrava"
+    ],
+    "richness": "med",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "author": null,
+    "report_date": "2023-05-03",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Keytrava",
+        "region": "EU",
+        "year": 2023,
+        "score": 0.37
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "HCP Perception Survey: Keytrava in non-small cell lung cancer (EU, 2023)",
+    "filename": "study_008.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2023,
+    "region": "US",
+    "n": 18,
+    "fmt": "pdf",
+    "no_author": true,
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Jardiva"
+    ],
+    "richness": "low",
+    "indication": "heart failure with reduced ejection fraction",
+    "therapeutic_area": "Cardiology",
+    "author": null,
+    "report_date": "2023-11-27",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Jardiva",
+        "region": "US",
+        "year": 2023,
+        "score": 0.7
+      }
+    ],
+    "indications": [
+      "heart failure with reduced ejection fraction"
+    ],
+    "title": "HCP Perception Survey: Jardiva in heart failure with reduced ejection fraction (US, 2023)",
+    "filename": "study_009.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2024,
+    "region": "EU",
+    "n": 260,
+    "fmt": "docx",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Enhertra"
+    ],
+    "richness": "high",
+    "indication": "HER2-positive breast cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Mei Tanaka",
+    "report_date": "2024-05-11",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Enhertra",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.75
+      }
+    ],
+    "indications": [
+      "HER2-positive breast cancer"
+    ],
+    "title": "HCP Perception Survey: Enhertra in HER2-positive breast cancer (EU, 2024)",
+    "filename": "study_010.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2022,
+    "region": "US",
+    "n": 150,
+    "fmt": "pdf",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Trodelvia"
+    ],
+    "richness": "med",
+    "indication": "triple-negative breast cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Sofia Albrecht",
+    "report_date": "2022-08-06",
+    "sensitivity": "INTERNAL",
+    "sentiment": [
+      {
+        "brand": "Trodelvia",
+        "region": "US",
+        "year": 2022,
+        "score": 0.28
+      }
+    ],
+    "indications": [
+      "triple-negative breast cancer"
+    ],
+    "title": "HCP Perception Survey: Trodelvia in triple-negative breast cancer (US, 2022)",
+    "filename": "study_011.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2021,
+    "region": "EU",
+    "n": 90,
+    "fmt": "docx",
+    "exact_dup_source": true,
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Entrestra"
+    ],
+    "richness": "low",
+    "indication": "heart failure with reduced ejection fraction",
+    "therapeutic_area": "Cardiology",
+    "author": "Rahul Desai",
+    "report_date": "2021-09-09",
+    "sensitivity": "RESTRICTED",
+    "sentiment": [
+      {
+        "brand": "Entrestra",
+        "region": "EU",
+        "year": 2021,
+        "score": 0.6
+      }
+    ],
+    "indications": [
+      "heart failure with reduced ejection fraction"
+    ],
+    "title": "HCP Perception Survey: Entrestra in heart failure with reduced ejection fraction (EU, 2021)",
+    "filename": "study_012.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2023,
+    "fmt": "pptx",
+    "new_version_source": true,
+    "image_slide": true,
+    "study_type": "Competitive Landscape Report",
+    "richness": "med",
+    "indication": "non-small cell lung cancer",
+    "author": "Greta Lindholm",
+    "report_date": "2023-06-22",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Keytrava",
+      "Opdivra",
+      "Tagrisa",
+      "Lumakro"
+    ],
+    "sentiment": [
+      {
+        "brand": "Keytrava",
+        "region": "EU",
+        "year": 2023,
+        "score": 0.38
+      },
+      {
+        "brand": "Opdivra",
+        "region": "EU",
+        "year": 2023,
+        "score": 0.35
+      },
+      {
+        "brand": "Tagrisa",
+        "region": "EU",
+        "year": 2023,
+        "score": 0.79
+      },
+      {
+        "brand": "Lumakro",
+        "region": "EU",
+        "year": 2023,
+        "score": 0.52
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "therapeutic_area": "Oncology",
+    "title": "Competitive Landscape: non-small cell lung cancer (EU, 2023)",
+    "filename": "study_013.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "US",
+    "year": 2023,
+    "fmt": "pdf",
+    "study_type": "Competitive Landscape Report",
+    "richness": "low",
+    "indication": "non-small cell lung cancer",
+    "author": "Omar Faruk",
+    "report_date": "2023-10-02",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Keytrava",
+      "Opdivra",
+      "Tagrisa",
+      "Lumakro"
+    ],
+    "sentiment": [
+      {
+        "brand": "Keytrava",
+        "region": "US",
+        "year": 2023,
+        "score": 0.68
+      },
+      {
+        "brand": "Opdivra",
+        "region": "US",
+        "year": 2023,
+        "score": 0.3
+      },
+      {
+        "brand": "Tagrisa",
+        "region": "US",
+        "year": 2023,
+        "score": 0.77
+      },
+      {
+        "brand": "Lumakro",
+        "region": "US",
+        "year": 2023,
+        "score": 0.54
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "therapeutic_area": "Oncology",
+    "title": "Competitive Landscape: non-small cell lung cancer (US, 2023)",
+    "filename": "study_014.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2024,
+    "fmt": "pdf",
+    "study_type": "Competitive Landscape Report",
+    "richness": "med",
+    "indication": "non-small cell lung cancer",
+    "author": "Hannah Weiss",
+    "report_date": "2024-09-12",
+    "sensitivity": "CONFIDENTIAL",
+    "n": 0,
+    "brands": [
+      "Keytrava",
+      "Opdivra",
+      "Tagrisa",
+      "Lumakro"
+    ],
+    "sentiment": [
+      {
+        "brand": "Keytrava",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.38
+      },
+      {
+        "brand": "Opdivra",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.29
+      },
+      {
+        "brand": "Tagrisa",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.74
+      },
+      {
+        "brand": "Lumakro",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.6
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "therapeutic_area": "Oncology",
+    "title": "Competitive Landscape: non-small cell lung cancer (EU, 2024)",
+    "filename": "study_015.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "GLOBAL",
+    "year": 2024,
+    "fmt": "pptx",
+    "unordered_boxes": true,
+    "study_type": "Competitive Landscape Report",
+    "richness": "high",
+    "indication": "heart failure with reduced ejection fraction",
+    "author": "Priya Venkat",
+    "report_date": "2024-09-07",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Entrestra",
+      "Jardiva",
+      "Verquvia"
+    ],
+    "sentiment": [
+      {
+        "brand": "Entrestra",
+        "region": "GLOBAL",
+        "year": 2024,
+        "score": 0.58
+      },
+      {
+        "brand": "Jardiva",
+        "region": "GLOBAL",
+        "year": 2024,
+        "score": 0.72
+      },
+      {
+        "brand": "Verquvia",
+        "region": "GLOBAL",
+        "year": 2024,
+        "score": 0.31
+      }
+    ],
+    "indications": [
+      "heart failure with reduced ejection fraction"
+    ],
+    "therapeutic_area": "Cardiology",
+    "title": "Competitive Landscape: heart failure with reduced ejection fraction (GLOBAL, 2024)",
+    "filename": "study_016.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2022,
+    "fmt": "pdf",
+    "study_type": "Competitive Landscape Report",
+    "richness": "med",
+    "indication": "plaque psoriasis",
+    "author": "Daniel Hartwell",
+    "report_date": "2022-11-23",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Humivex",
+      "Adalibra",
+      "Cosentex",
+      "Skyrixa"
+    ],
+    "sentiment": [
+      {
+        "brand": "Humivex",
+        "region": "EU",
+        "year": 2022,
+        "score": 0.74
+      },
+      {
+        "brand": "Adalibra",
+        "region": "EU",
+        "year": 2022,
+        "score": 0.55
+      },
+      {
+        "brand": "Cosentex",
+        "region": "EU",
+        "year": 2022,
+        "score": 0.71
+      },
+      {
+        "brand": "Skyrixa",
+        "region": "EU",
+        "year": 2022,
+        "score": 0.59
+      }
+    ],
+    "indications": [
+      "plaque psoriasis"
+    ],
+    "therapeutic_area": "Immunology",
+    "title": "Competitive Landscape: plaque psoriasis (EU, 2022)",
+    "filename": "study_017.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "US",
+    "year": 2024,
+    "fmt": "pptx",
+    "study_type": "Competitive Landscape Report",
+    "richness": "med",
+    "indication": "plaque psoriasis",
+    "author": "Mei Tanaka",
+    "report_date": "2024-02-25",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Humivex",
+      "Adalibra",
+      "Cosentex",
+      "Skyrixa"
+    ],
+    "sentiment": [
+      {
+        "brand": "Humivex",
+        "region": "US",
+        "year": 2024,
+        "score": 0.37
+      },
+      {
+        "brand": "Adalibra",
+        "region": "US",
+        "year": 2024,
+        "score": 0.57
+      },
+      {
+        "brand": "Cosentex",
+        "region": "US",
+        "year": 2024,
+        "score": 0.33
+      },
+      {
+        "brand": "Skyrixa",
+        "region": "US",
+        "year": 2024,
+        "score": 0.55
+      }
+    ],
+    "indications": [
+      "plaque psoriasis"
+    ],
+    "therapeutic_area": "Immunology",
+    "title": "Competitive Landscape: plaque psoriasis (US, 2024)",
+    "filename": "study_018.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2023,
+    "fmt": "pdf",
+    "study_type": "Competitive Landscape Report",
+    "richness": "med",
+    "indication": "HER2-positive breast cancer",
+    "author": "Sofia Albrecht",
+    "report_date": "2023-03-23",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Enhertra"
+    ],
+    "sentiment": [
+      {
+        "brand": "Enhertra",
+        "region": "EU",
+        "year": 2023,
+        "score": 0.7
+      }
+    ],
+    "indications": [
+      "HER2-positive breast cancer"
+    ],
+    "therapeutic_area": "Oncology",
+    "title": "Competitive Landscape: HER2-positive breast cancer (EU, 2023)",
+    "filename": "study_019.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "US",
+    "year": 2023,
+    "fmt": "pptx",
+    "study_type": "Competitive Landscape Report",
+    "richness": "med",
+    "indication": "atopic dermatitis",
+    "author": "Rahul Desai",
+    "report_date": "2023-03-23",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Dupixa"
+    ],
+    "sentiment": [
+      {
+        "brand": "Dupixa",
+        "region": "US",
+        "year": 2023,
+        "score": 0.78
+      }
+    ],
+    "indications": [
+      "atopic dermatitis"
+    ],
+    "therapeutic_area": "Immunology",
+    "title": "Competitive Landscape: atopic dermatitis (US, 2023)",
+    "filename": "study_020.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2023,
+    "fmt": "docx",
+    "study_type": "Indication Deep Dive",
+    "richness": "low",
+    "indication": "EGFR-mutant NSCLC",
+    "author": "Greta Lindholm",
+    "report_date": "2023-09-21",
+    "sensitivity": "PUBLIC",
+    "n": 0,
+    "brands": [
+      "Tagrisa"
+    ],
+    "sentiment": [],
+    "indications": [
+      "EGFR-mutant NSCLC"
+    ],
+    "therapeutic_area": "Oncology",
+    "title": "Indication Deep Dive: EGFR-mutant NSCLC (EU, 2023)",
+    "filename": "study_021.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2024,
+    "fmt": "docx",
+    "study_type": "Indication Deep Dive",
+    "richness": "high",
+    "indication": "HER2-positive breast cancer",
+    "author": "Omar Faruk",
+    "report_date": "2024-01-16",
+    "sensitivity": "PUBLIC",
+    "n": 0,
+    "brands": [
+      "Enhertra"
+    ],
+    "sentiment": [],
+    "indications": [
+      "HER2-positive breast cancer"
+    ],
+    "therapeutic_area": "Oncology",
+    "title": "Indication Deep Dive: HER2-positive breast cancer (EU, 2024)",
+    "filename": "study_022.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "US",
+    "year": 2022,
+    "fmt": "docx",
+    "study_type": "Indication Deep Dive",
+    "richness": "med",
+    "indication": "heart failure with reduced ejection fraction",
+    "author": "Hannah Weiss",
+    "report_date": "2022-12-19",
+    "sensitivity": "PUBLIC",
+    "n": 0,
+    "brands": [
+      "Entrestra",
+      "Jardiva",
+      "Verquvia"
+    ],
+    "sentiment": [],
+    "indications": [
+      "heart failure with reduced ejection fraction"
+    ],
+    "therapeutic_area": "Cardiology",
+    "title": "Indication Deep Dive: heart failure with reduced ejection fraction (US, 2022)",
+    "filename": "study_023.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2023,
+    "fmt": "docx",
+    "study_type": "Indication Deep Dive",
+    "richness": "high",
+    "indication": "atrial fibrillation",
+    "author": "Priya Venkat",
+    "report_date": "2023-03-01",
+    "sensitivity": "PUBLIC",
+    "n": 0,
+    "brands": [
+      "Eliquex"
+    ],
+    "sentiment": [],
+    "indications": [
+      "atrial fibrillation"
+    ],
+    "therapeutic_area": "Cardiology",
+    "title": "Indication Deep Dive: atrial fibrillation (EU, 2023)",
+    "filename": "study_024.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "EU",
+    "year": 2024,
+    "fmt": "docx",
+    "study_type": "Indication Deep Dive",
+    "richness": "low",
+    "indication": "multiple sclerosis",
+    "author": "Daniel Hartwell",
+    "report_date": "2024-11-07",
+    "sensitivity": "PUBLIC",
+    "n": 0,
+    "brands": [
+      "Ocrevia"
+    ],
+    "sentiment": [],
+    "indications": [
+      "multiple sclerosis"
+    ],
+    "therapeutic_area": "Neurology",
+    "title": "Indication Deep Dive: multiple sclerosis (EU, 2024)",
+    "filename": "study_025.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "US",
+    "year": 2023,
+    "fmt": "docx",
+    "study_type": "Indication Deep Dive",
+    "richness": "low",
+    "indication": "migraine",
+    "author": "Mei Tanaka",
+    "report_date": "2023-12-07",
+    "sensitivity": "PUBLIC",
+    "n": 0,
+    "brands": [
+      "Aimovia"
+    ],
+    "sentiment": [],
+    "indications": [
+      "migraine"
+    ],
+    "therapeutic_area": "Neurology",
+    "title": "Indication Deep Dive: migraine (US, 2023)",
+    "filename": "study_026.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "region": "US",
+    "year": 2022,
+    "fmt": "docx",
+    "study_type": "Indication Deep Dive",
+    "richness": "high",
+    "indication": "plaque psoriasis",
+    "author": "Sofia Albrecht",
+    "report_date": "2022-11-28",
+    "sensitivity": "PUBLIC",
+    "n": 0,
+    "brands": [
+      "Humivex",
+      "Adalibra",
+      "Cosentex",
+      "Skyrixa"
+    ],
+    "sentiment": [],
+    "indications": [
+      "plaque psoriasis"
+    ],
+    "therapeutic_area": "Immunology",
+    "title": "Indication Deep Dive: plaque psoriasis (US, 2022)",
+    "filename": "study_027.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "DE",
+    "year": 2023,
+    "fmt": "pdf",
+    "study_type": "Market Access Insight",
+    "brands": [
+      "Keytrava"
+    ],
+    "richness": "med",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "region": "EU",
+    "author": "Rahul Desai",
+    "report_date": "2023-07-15",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "Market Access Insight: Keytrava in Germany (2023)",
+    "filename": "study_028.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "FR",
+    "year": 2024,
+    "fmt": "pdf",
+    "study_type": "Market Access Insight",
+    "brands": [
+      "Enhertra"
+    ],
+    "richness": "low",
+    "indication": "HER2-positive breast cancer",
+    "therapeutic_area": "Oncology",
+    "region": "EU",
+    "author": "Greta Lindholm",
+    "report_date": "2024-02-17",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "HER2-positive breast cancer"
+    ],
+    "title": "Market Access Insight: Enhertra in France (2024)",
+    "filename": "study_029.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "IT",
+    "year": 2022,
+    "fmt": "pdf",
+    "study_type": "Market Access Insight",
+    "brands": [
+      "Jardiva"
+    ],
+    "richness": "high",
+    "indication": "heart failure with reduced ejection fraction",
+    "therapeutic_area": "Cardiology",
+    "region": "EU",
+    "author": "Omar Faruk",
+    "report_date": "2022-02-21",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "heart failure with reduced ejection fraction"
+    ],
+    "title": "Market Access Insight: Jardiva in Italy (2022)",
+    "filename": "study_030.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "ES",
+    "year": 2023,
+    "fmt": "pdf",
+    "study_type": "Market Access Insight",
+    "brands": [
+      "Ocrevia"
+    ],
+    "richness": "high",
+    "indication": "multiple sclerosis",
+    "therapeutic_area": "Neurology",
+    "region": "EU",
+    "author": "Hannah Weiss",
+    "report_date": "2023-09-17",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "multiple sclerosis"
+    ],
+    "title": "Market Access Insight: Ocrevia in Spain (2023)",
+    "filename": "study_031.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "UK",
+    "year": 2024,
+    "fmt": "pdf",
+    "study_type": "Market Access Insight",
+    "brands": [
+      "Skyrixa"
+    ],
+    "richness": "low",
+    "indication": "plaque psoriasis",
+    "therapeutic_area": "Immunology",
+    "region": "EU",
+    "author": "Priya Venkat",
+    "report_date": "2024-08-20",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "plaque psoriasis"
+    ],
+    "title": "Market Access Insight: Skyrixa in United Kingdom (2024)",
+    "filename": "study_032.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "US",
+    "year": 2022,
+    "fmt": "pdf",
+    "study_type": "Market Access Insight",
+    "brands": [
+      "Humivex"
+    ],
+    "richness": "high",
+    "indication": "plaque psoriasis",
+    "therapeutic_area": "Immunology",
+    "region": "US",
+    "author": "Daniel Hartwell",
+    "report_date": "2022-06-06",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "plaque psoriasis"
+    ],
+    "title": "Market Access Insight: Humivex in United States (2022)",
+    "filename": "study_033.pdf",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "DE",
+    "year": 2024,
+    "fmt": "docx",
+    "study_type": "KOL Interview Summary",
+    "brands": [
+      "Aimovia"
+    ],
+    "richness": "high",
+    "indication": "migraine",
+    "therapeutic_area": "Neurology",
+    "region": "EU",
+    "author": "Mei Tanaka",
+    "report_date": "2024-06-20",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "migraine"
+    ],
+    "title": "KOL Interview Summary: Aimovia in Germany (2024)",
+    "filename": "study_034.docx",
+    "planted": {},
+    "ingest_age": 330
+  },
+  {
+    "country": "FR",
+    "year": 2023,
+    "fmt": "docx",
+    "study_type": "KOL Interview Summary",
+    "brands": [
+      "Eliquex"
+    ],
+    "richness": "med",
+    "indication": "atrial fibrillation",
+    "therapeutic_area": "Cardiology",
+    "region": "EU",
+    "author": "Sofia Albrecht",
+    "report_date": "2023-03-25",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "atrial fibrillation"
+    ],
+    "title": "KOL Interview Summary: Eliquex in France (2023)",
+    "filename": "study_035.docx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "DE",
+    "year": 2024,
+    "fmt": "docx",
+    "pii": true,
+    "study_type": "KOL Interview Summary",
+    "brands": [
+      "Tagrisa"
+    ],
+    "richness": "med",
+    "indication": "EGFR-mutant NSCLC",
+    "therapeutic_area": "Oncology",
+    "region": "EU",
+    "author": "Rahul Desai",
+    "report_date": "2024-03-19",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "EGFR-mutant NSCLC"
+    ],
+    "title": "KOL Interview Summary: Tagrisa in Germany (2024)",
+    "filename": "study_036.docx",
+    "planted": {
+      "pii": true
+    },
+    "ingest_age": null
+  },
+  {
+    "country": "UK",
+    "year": 2023,
+    "fmt": "txt",
+    "study_type": "KOL Interview Summary",
+    "brands": [
+      "Ocrevia"
+    ],
+    "richness": "high",
+    "indication": "multiple sclerosis",
+    "therapeutic_area": "Neurology",
+    "region": "EU",
+    "author": "Greta Lindholm",
+    "report_date": "2023-05-24",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "multiple sclerosis"
+    ],
+    "title": "KOL Interview Summary: Ocrevia in United Kingdom (2023)",
+    "filename": "study_037.txt",
+    "planted": {},
+    "ingest_age": 400
+  },
+  {
+    "country": "US",
+    "year": 2024,
+    "fmt": "txt",
+    "show_title": false,
+    "no_author": true,
+    "study_type": "KOL Interview Summary",
+    "brands": [
+      "Verquvia"
+    ],
+    "richness": "low",
+    "indication": "heart failure with reduced ejection fraction",
+    "therapeutic_area": "Cardiology",
+    "region": "US",
+    "author": null,
+    "report_date": "2024-12-13",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "heart failure with reduced ejection fraction"
+    ],
+    "title": "KOL Interview Summary: Verquvia in United States (2024)",
+    "filename": "study_038.txt",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "country": "ES",
+    "year": 2024,
+    "fmt": "txt",
+    "encoding": "cp1252",
+    "study_type": "KOL Interview Summary",
+    "brands": [
+      "Lumakro"
+    ],
+    "richness": "high",
+    "indication": "KRAS G12C-mutant NSCLC",
+    "therapeutic_area": "Oncology",
+    "region": "EU",
+    "author": "Hannah Weiss",
+    "report_date": "2024-07-12",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "sentiment": [],
+    "indications": [
+      "KRAS G12C-mutant NSCLC"
+    ],
+    "title": "KOL Interview Summary: Lumakro in Spain (2024)",
+    "filename": "study_039.txt",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "ta": "Oncology",
+    "region": "GLOBAL",
+    "year": 2024,
+    "fmt": "pptx",
+    "image_slide": true,
+    "study_type": "Therapy Area Landscape",
+    "richness": "low",
+    "therapeutic_area": "Oncology",
+    "author": "Priya Venkat",
+    "report_date": "2024-05-23",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "brands": [
+      "Keytrava",
+      "Opdivra",
+      "Tagrisa",
+      "Lumakro",
+      "Enhertra",
+      "Trodelvia"
+    ],
+    "sentiment": [],
+    "indications": [
+      "EGFR-mutant NSCLC",
+      "HER2-positive breast cancer",
+      "KRAS G12C-mutant NSCLC",
+      "melanoma",
+      "non-small cell lung cancer",
+      "renal cell carcinoma",
+      "triple-negative breast cancer"
+    ],
+    "title": "Therapy Area Landscape: Oncology (GLOBAL, 2024)",
+    "filename": "study_040.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "ta": "Cardiology",
+    "region": "EU",
+    "year": 2023,
+    "fmt": "pptx",
+    "study_type": "Therapy Area Landscape",
+    "richness": "med",
+    "therapeutic_area": "Cardiology",
+    "author": "Daniel Hartwell",
+    "report_date": "2023-08-17",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "brands": [
+      "Entrestra",
+      "Jardiva",
+      "Verquvia",
+      "Eliquex"
+    ],
+    "sentiment": [],
+    "indications": [
+      "atrial fibrillation",
+      "heart failure with preserved ejection fraction",
+      "heart failure with reduced ejection fraction"
+    ],
+    "title": "Therapy Area Landscape: Cardiology (EU, 2023)",
+    "filename": "study_041.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "ta": "Neurology",
+    "region": "US",
+    "year": 2024,
+    "fmt": "pptx",
+    "unordered_boxes": true,
+    "study_type": "Therapy Area Landscape",
+    "richness": "high",
+    "therapeutic_area": "Neurology",
+    "author": "Mei Tanaka",
+    "report_date": "2024-04-15",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "brands": [
+      "Ocrevia",
+      "Aimovia",
+      "Leqembra"
+    ],
+    "sentiment": [],
+    "indications": [
+      "Alzheimer's disease",
+      "migraine",
+      "multiple sclerosis"
+    ],
+    "title": "Therapy Area Landscape: Neurology (US, 2024)",
+    "filename": "study_042.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "ta": "Immunology",
+    "region": "GLOBAL",
+    "year": 2023,
+    "fmt": "pptx",
+    "study_type": "Therapy Area Landscape",
+    "richness": "high",
+    "therapeutic_area": "Immunology",
+    "author": "Sofia Albrecht",
+    "report_date": "2023-02-05",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "brands": [
+      "Humivex",
+      "Adalibra",
+      "Cosentex",
+      "Skyrixa",
+      "Dupixa"
+    ],
+    "sentiment": [],
+    "indications": [
+      "atopic dermatitis",
+      "plaque psoriasis",
+      "psoriatic arthritis",
+      "rheumatoid arthritis"
+    ],
+    "title": "Therapy Area Landscape: Immunology (GLOBAL, 2023)",
+    "filename": "study_043.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "ta": "Immunology",
+    "region": "EU",
+    "year": 2022,
+    "fmt": "pptx",
+    "study_type": "Therapy Area Landscape",
+    "richness": "low",
+    "therapeutic_area": "Immunology",
+    "author": "Rahul Desai",
+    "report_date": "2022-02-07",
+    "sensitivity": "INTERNAL",
+    "n": 0,
+    "brands": [
+      "Humivex",
+      "Adalibra",
+      "Cosentex",
+      "Skyrixa",
+      "Dupixa"
+    ],
+    "sentiment": [],
+    "indications": [
+      "atopic dermatitis",
+      "plaque psoriasis",
+      "psoriatic arthritis",
+      "rheumatoid arthritis"
+    ],
+    "title": "Therapy Area Landscape: Immunology (EU, 2022)",
+    "filename": "study_044.pptx",
+    "planted": {},
+    "ingest_age": null
+  },
+  {
+    "year": 2023,
+    "region": "US",
+    "n": 500,
+    "fmt": "docx",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Keytrava"
+    ],
+    "richness": "high",
+    "indication": "non-small cell lung cancer",
+    "therapeutic_area": "Oncology",
+    "author": "Hannah Weiss",
+    "report_date": "2023-09-14",
+    "sensitivity": "RESTRICTED",
+    "sentiment": [
+      {
+        "brand": "Keytrava",
+        "region": "US",
+        "year": 2023,
+        "score": 0.73
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "title": "HCP Perception Survey: Keytrava in non-small cell lung cancer (US, 2023)",
+    "filename": "study_007_rev.docx",
+    "planted": {
+      "near_duplicate_of": "study_007.docx"
+    },
+    "ingest_age": 0
+  },
+  {
+    "region": "EU",
+    "year": 2024,
+    "fmt": "pdf",
+    "image_slide": false,
+    "study_type": "Competitive Landscape Report",
+    "richness": "med",
+    "indication": "non-small cell lung cancer",
+    "author": "Greta Lindholm",
+    "report_date": "2024-08-15",
+    "sensitivity": "RESTRICTED",
+    "n": 0,
+    "brands": [
+      "Keytrava",
+      "Opdivra",
+      "Tagrisa",
+      "Lumakro"
+    ],
+    "sentiment": [
+      {
+        "brand": "Keytrava",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.33
+      },
+      {
+        "brand": "Opdivra",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.29
+      },
+      {
+        "brand": "Tagrisa",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.73
+      },
+      {
+        "brand": "Lumakro",
+        "region": "EU",
+        "year": 2024,
+        "score": 0.5
+      }
+    ],
+    "indications": [
+      "non-small cell lung cancer"
+    ],
+    "therapeutic_area": "Oncology",
+    "title": "Competitive Landscape: non-small cell lung cancer (EU, 2023)",
+    "filename": "study_013_update.pdf",
+    "planted": {
+      "new_version_of": "study_013.pptx"
+    },
+    "ingest_age": 0
+  },
+  {
+    "year": 2021,
+    "region": "EU",
+    "n": 90,
+    "fmt": "docx",
+    "study_type": "HCP Perception Survey",
+    "brands": [
+      "Entrestra"
+    ],
+    "richness": "low",
+    "indication": "heart failure with reduced ejection fraction",
+    "therapeutic_area": "Cardiology",
+    "author": "Rahul Desai",
+    "report_date": "2021-09-09",
+    "sensitivity": "RESTRICTED",
+    "sentiment": [
+      {
+        "brand": "Entrestra",
+        "region": "EU",
+        "year": 2021,
+        "score": 0.6
+      }
+    ],
+    "indications": [
+      "heart failure with reduced ejection fraction"
+    ],
+    "title": "HCP Perception Survey: Entrestra in heart failure with reduced ejection fraction (EU, 2021)",
+    "filename": "study_012_copy.docx",
+    "planted": {
+      "exact_duplicate_of": "study_012.docx"
+    },
+    "ingest_age": 0
+  }
+]

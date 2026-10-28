@@ -1,0 +1,73 @@
+KOL Interview Summary: Lumakro in Spain (2024)
+
+Report date: 2024-07-12 | Prepared by: Hannah Weiss
+
+INTERVIEW SUMMARY
+
+Dr. Jürgen Müller, a leading oncologist in Spain, was interviewed on December 2024 about Lumakro (sotavacib) in KRAS G12C-mutant NSCLC.
+
+Dr. Jürgen Müller noted that while the efficacy data for Lumakro are compelling, cost and formulary access remain barriers.
+
+CLINICAL PERSPECTIVE
+
+Dr. Jürgen Müller said that tolerability, particularly infusion reactions and fatigue, shapes the choice between Lumakro and alternatives in KRAS G12C-mutant NSCLC.
+
+In Spain, Dr. Jürgen Müller explained that treatment decisions follow national guidelines and local payer rules.
+
+Dose modification guidance for Lumakro is generally followed, but oncologists said that practical monitoring of diarrhoea depends on local capacity and patient travel distance.
+
+Biosimilar and generic competition in adjacent classes is shaping price expectations, even where Lumakro has no direct substitute.
+
+Respondents expect real-world persistence on Lumakro to be lower than in trials, mainly because of treatment burden over long durations and the complexity of managing immune-related adverse events.
+
+Medical education priorities include recognising diarrhoea early, communicating realistic expectations, and coordinating with primary care.
+
+Oncologists emphasised that patient-reported outcomes and quality of life are increasingly important when choosing between KRAS G12C inhibitor options.
+
+The unmet need in KRAS G12C-mutant NSCLC persists in patients who relapse or become refractory, where options are limited and outcomes remain poor.
+
+Cost-effectiveness submissions typically model first-line use, and payers question the durability of benefit beyond the trial follow-up period.
+
+Education needs include biomarker testing, management of adverse events and counselling patients on the expected benefit-risk.
+
+Real-world evidence from registries suggests that outcomes in routine practice are broadly consistent with phase 3 trial results, although persistence and discontinuation rates are higher outside clinical trials.
+
+Treatment burden, including monitoring visits and treatment burden over long durations, was described as a key factor in long-term adherence and persistence.
+
+Guideline committees are expected to review the evidence base for KRAS G12C-mutant NSCLC again next year, which could change eligibility criteria and referral patterns.
+
+Access to specialist centres influences adoption: academic centres adopt new therapies faster than community practices, where formulary restrictions and reimbursement criteria apply.
+
+Supply and logistics are not a concern for Lumakro, though cold-chain handling and nurse-led administration add workload in busy clinics.
+
+ADVICE TO THE BRAND TEAM
+
+Dr. Jürgen Müller recommended investing in real-world evidence and in education on missed maintenance doses.
+
+Patient advocacy groups are pushing for earlier access, and shared decision-making tools are being piloted to explain benefit, risk and treatment burden.
+
+Payer decisions increasingly rely on health technology assessment, requiring evidence of clinical benefit versus the standard of care and cost-effectiveness analyses.
+
+Safety monitoring focused on diarrhoea and infusion reactions, with dose interruption or discontinuation used for severe adverse events.
+
+Sequencing after progression remains an open question; oncologists in Spain reported using a different mechanism of action after Lumakro fails.
+
+Combination therapy and sequencing strategies remain debated; respondents noted limited head-to-head evidence between Lumakro and competing agents.
+
+Registry data show that outcomes in KRAS G12C-mutant NSCLC depend heavily on early diagnosis, access to specialist care and adherence to maintenance therapy.
+
+Treatment burden, including monitoring visits and treatment burden over long durations, was described as a key factor in long-term adherence and persistence.
+
+Clinical guidelines in Spain recommend first-line use of agents in this class, and recent updates have broadened eligibility based on biomarker status and comorbidity profile.
+
+Subgroup analyses suggest that benefit with Lumakro is most pronounced in patients with a favourable biomarker profile and a lower comorbidity burden.
+
+Dose modification guidance for Lumakro is generally followed, but oncologists said that practical monitoring of diarrhoea depends on local capacity and patient travel distance.
+
+Access to specialist centres influences adoption: academic centres adopt new therapies faster than community practices, where formulary restrictions and reimbursement criteria apply.
+
+Regional variation within Spain is notable: large centres report faster uptake and broader use than smaller regional hospitals.
+
+Biosimilar and generic competition in adjacent classes is shaping price expectations, even where Lumakro has no direct substitute.
+
+Synthetic document generated for the Watson prototype. All brand names and figures are fictional.
