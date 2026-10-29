@@ -1,0 +1,194 @@
+# SHACL shapes for the Watson knowledge graph (hand-written). Run by shacl_validator.py with pyshacl,
+# against the graph (pharma.ttl + reference data + runtime triples) with RDFS inference on, so a document typed
+# Watson:HCPPerceptionSurvey is also checked as a Watson:MarketResearchDocument.
+#
+# The brief's four validation checks map to shapes like this:
+#   (1) every document has state, sensitivity and expiry     -> Watson:DocumentShape
+#   (2) every chunk has one parent and its ACL attributes    -> Watson:ChunkShape   (the vector binding is checked
+#                                                               against the FAISS index in shacl_validator.py: SHACL
+#                                                               cannot see a file)
+#   (3) no ungrounded or orphan entity                       -> the entity shapes + Watson:ProvisionalEntityShape
+#   (4) every chunk traces to a lineage record with reviewer -> Watson:ChunkShape + Watson:LineageRecordShape
+
+@prefix Watson: <http://watson.local/pharma#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# ------------------------------------------------------------------ documents
+Watson:DocumentShape a sh:NodeShape ;
+    sh:targetClass Watson:MarketResearchDocument ;
+    sh:name "Document has state, sensitivity, expiry and a place in the taxonomy" ;
+    sh:property [ sh:path Watson:lifecycleState ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:in ( "DRAFT" "UNDER_REVIEW" "ACTIVE" "REJECTED" "ARCHIVED" ) ;
+                  sh:message "A document needs exactly one lifecycleState from the Layer 1 state machine." ] ;
+    sh:property [ sh:path Watson:sensitivityLevel ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "PUBLIC" "INTERNAL" "RESTRICTED" "CONFIDENTIAL" ) ;
+                  sh:message "A document needs exactly one sensitivityLevel (PUBLIC, INTERNAL, RESTRICTED, CONFIDENTIAL)." ] ;
+    sh:property [ sh:path Watson:expiry_date ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ;
+                  sh:message "A document needs exactly one expiry_date (xsd:date)." ] ;
+    sh:property [ sh:path Watson:quality_score ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:double ;
+                  sh:minInclusive 0.0 ; sh:maxInclusive 1.0 ;
+                  sh:message "quality_score must be a single number from 0 to 1." ] ;
+    sh:property [ sh:path Watson:ingest_timestamp ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+    sh:property [ sh:path Watson:study_type ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path Watson:documentTitle ; sh:minCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path Watson:inTherapeuticArea ; sh:minCount 1 ; sh:class Watson:TherapeuticArea ;
+                  sh:message "A document must point at a known TherapeuticArea." ] ;
+    sh:property [ sh:path Watson:coversGeography ; sh:minCount 1 ; sh:class Watson:Geography ;
+                  sh:message "A document must point at a known Geography." ] ;
+    sh:property [ sh:path Watson:mentionsBrand ; sh:class Watson:Brand ] ;
+    sh:property [ sh:path Watson:mentionsIndication ; sh:class Watson:Indication ] ;
+    sh:property [ sh:path Watson:mentionsDrug ; sh:class Watson:Drug ] ;
+    sh:property [ sh:path Watson:isInSpace ; sh:class Watson:KnowledgeSpace ] ;
+    sh:property [ sh:path Watson:hasChunk ; sh:minCount 1 ; sh:class Watson:DocumentChunk ;
+                  sh:message "A document in the graph must have at least one chunk." ] .
+
+# ------------------------------------------------------------------ chunks
+Watson:ChunkShape a sh:NodeShape ;
+    sh:targetClass Watson:DocumentChunk ;
+    sh:name "Chunk has one parent, ACL attributes and a lineage record" ;
+    sh:property [ sh:path Watson:isChunkOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:MarketResearchDocument ;
+                  sh:message "A chunk must have exactly one parent document." ] ;
+    sh:property [ sh:path Watson:sensitivityLevel ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "PUBLIC" "INTERNAL" "RESTRICTED" "CONFIDENTIAL" ) ;
+                  sh:message "A chunk must carry the sensitivityLevel of its document (ABAC works per chunk)." ] ;
+    sh:property [ sh:path Watson:allowedTA ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path Watson:allowedGeo ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path Watson:chunk_index ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path Watson:faissId ; sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path Watson:derivedFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:LineageRecord ;
+                  sh:message "A chunk must trace to exactly one LineageRecord." ] ;
+    sh:property [ sh:path Watson:mentionsBrand ; sh:class Watson:Brand ] ;
+    sh:property [ sh:path Watson:mentionsIndication ; sh:class Watson:Indication ] ;
+    sh:property [ sh:path Watson:mentionsDrug ; sh:class Watson:Drug ] ;
+    sh:property [ sh:path Watson:mentionsDrugClass ; sh:class Watson:DrugClass ] ;
+    sh:property [ sh:path Watson:mentionsProvisional ; sh:class Watson:ProvisionalEntity ] ;
+    sh:property [ sh:path Watson:coversGeography ; sh:class Watson:Geography ] .
+
+# ------------------------------------------------------------------ lineage
+Watson:LineageRecordShape a sh:NodeShape ;
+    sh:targetClass Watson:LineageRecord ;
+    sh:name "Lineage record names the document, the reviewer, the model and the counts" ;
+    sh:property [ sh:path Watson:processedDocument ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:MarketResearchDocument ] ;
+    sh:property [ sh:path Watson:reviewedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:Reviewer ;
+                  sh:message "A LineageRecord must name the human reviewer who approved the document." ] ;
+    sh:property [ sh:path Watson:chunksProduced ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path Watson:triplesWritten ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path Watson:processingTimestamp ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+    sh:property [ sh:path Watson:enrichmentModel ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path Watson:catalogVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A LineageRecord must say which catalog version the entities were grounded against." ] .
+
+# ------------------------------------------------------------------ sentiment
+Watson:SentimentAssertionShape a sh:NodeShape ;
+    sh:targetClass Watson:SentimentAssertion ;
+    sh:name "Sentiment assertion is a complete, dated, sourced fact" ;
+    sh:property [ sh:path Watson:sentimentScore ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:double ;
+                  sh:minInclusive 0.0 ; sh:maxInclusive 1.0 ;
+                  sh:message "sentimentScore must be one number from 0 to 1." ] ;
+    sh:property [ sh:path Watson:assertionDate ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ] ;
+    sh:property [ sh:path Watson:forBrand ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:Brand ] ;
+    sh:property [ sh:path Watson:forGeography ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:Geography ] ;
+    sh:property [ sh:path Watson:forIndication ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:Indication ] ;
+    sh:property [ sh:path Watson:derivedFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:DocumentChunk ;
+                  sh:message "A sentiment assertion must cite the chunk it was read from." ] ;
+    sh:property [ sh:path [ sh:inversePath Watson:hasSentiment ] ; sh:minCount 1 ;
+                  sh:message "A sentiment assertion must hang off a Brand through hasSentiment." ] .
+
+# ------------------------------------------------------------------ grounded reference entities (check 3: no ungrounded entity)
+Watson:BrandShape a sh:NodeShape ;
+    sh:targetClass Watson:Brand ;
+    sh:name "Brand is grounded in the catalog and has a drug" ;
+    sh:property [ sh:path Watson:groundedIn ; sh:minCount 1 ; sh:class Watson:CatalogAsset ;
+                  sh:message "Brand is not grounded in any data-catalog table or column." ] ;
+    sh:property [ sh:path Watson:containsDrug ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:Drug ] ;
+    sh:property [ sh:path Watson:inTherapeuticArea ; sh:minCount 1 ; sh:class Watson:TherapeuticArea ] ;
+    sh:property [ sh:path Watson:targetedIndication ; sh:minCount 1 ; sh:class Watson:Indication ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ] ;
+    sh:property [ sh:path Watson:catalogVersion ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+Watson:DrugShape a sh:NodeShape ;
+    sh:targetClass Watson:Drug ;
+    sh:property [ sh:path Watson:groundedIn ; sh:minCount 1 ; sh:class Watson:CatalogAsset ;
+                  sh:message "Drug is not grounded in any data-catalog table or column." ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ] ;
+    sh:property [ sh:path Watson:catalogVersion ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+Watson:DrugClassShape a sh:NodeShape ;
+    sh:targetClass Watson:DrugClass ;
+    sh:property [ sh:path Watson:groundedIn ; sh:minCount 1 ; sh:class Watson:CatalogAsset ;
+                  sh:message "DrugClass is not grounded in any data-catalog table or column." ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ] .
+
+Watson:IndicationShape a sh:NodeShape ;
+    sh:targetClass Watson:Indication ;
+    sh:property [ sh:path Watson:groundedIn ; sh:minCount 1 ; sh:class Watson:CatalogAsset ;
+                  sh:message "Indication is not grounded in any data-catalog table or column." ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ] ;
+    sh:property [ sh:path Watson:inTherapeuticArea ; sh:minCount 1 ; sh:class Watson:TherapeuticArea ] ;
+    sh:property [ sh:path Watson:subIndicationOf ; sh:class Watson:Indication ] ;
+    sh:property [ sh:path Watson:catalogVersion ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+Watson:TherapeuticAreaShape a sh:NodeShape ;
+    sh:targetClass Watson:TherapeuticArea ;
+    sh:property [ sh:path Watson:groundedIn ; sh:minCount 1 ; sh:class Watson:CatalogAsset ;
+                  sh:message "TherapeuticArea is not grounded in any data-catalog table or column." ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ] .
+
+Watson:GeographyShape a sh:NodeShape ;
+    sh:targetClass Watson:Geography ;
+    sh:property [ sh:path Watson:groundedIn ; sh:minCount 1 ; sh:class Watson:CatalogAsset ;
+                  sh:message "Geography is not grounded in any data-catalog table or column." ] ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ] ;
+    sh:property [ sh:path Watson:geographyKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "country" "region" ) ] .
+
+# ------------------------------------------------------------------ provisional entities (check 3: no orphan)
+Watson:ProvisionalEntityShape a sh:NodeShape ;
+    sh:targetClass Watson:ProvisionalEntity ;
+    sh:name "Provisional entity is declared, typed, and was found somewhere" ;
+    sh:property [ sh:path rdfs:label ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path Watson:entityType ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path Watson:provisionalStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "PENDING" "APPROVED" "REJECTED" ) ] ;
+    sh:property [ sh:path [ sh:inversePath Watson:mentionsProvisional ] ; sh:minCount 1 ;
+                  sh:message "Orphan provisional entity: no chunk mentions it." ] .
+
+# ------------------------------------------------------------------ knowledge spaces
+Watson:KnowledgeSpaceShape a sh:NodeShape ;
+    sh:targetClass Watson:KnowledgeSpace ;
+    sh:property [ sh:path Watson:spaceName ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path Watson:spaceOwner ; sh:minCount 1 ; sh:maxCount 1 ; sh:class Watson:Reviewer ] ;
+    sh:property [ sh:path Watson:created ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+    sh:property [ sh:path Watson:containsDocument ; sh:class Watson:MarketResearchDocument ] .
+
+# ------------------------------------------------------------------ catalog assets and ontology terms
+Watson:CatalogAssetShape a sh:NodeShape ;
+    sh:targetClass Watson:CatalogAsset ;
+    sh:property [ sh:path Watson:fqn ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path Watson:assetOrigin ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "upstream" "extension" ) ] ;
+    sh:property [ sh:path Watson:catalogVersion ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+# Every ontology term is either grounded in the catalog or openly declared a Watson extension.
+Watson:OntologyClassGroundingShape a sh:NodeShape ;
+    sh:targetClass owl:Class , owl:ObjectProperty , owl:DatatypeProperty ;
+    sh:nodeKind sh:IRI ;
+    sh:property [ sh:path Watson:groundingStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "grounded" "partial" "extension" ) ;
+                  sh:message "Ontology term has no groundingStatus: it is neither grounded in the catalog nor declared an extension." ] .
+
+# A term that claims to be grounded must say where.
+Watson:GroundedTermShape a sh:NodeShape ;
+    sh:targetSubjectsOf Watson:groundingStatus ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Term is marked grounded or partial but has no groundedIn catalog asset." ;
+        sh:prefixes <http://watson.local/pharma> ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <http://watson.local/pharma#groundingStatus> ?s .
+                FILTER (?s IN ("grounded", "partial"))
+                FILTER NOT EXISTS { $this <http://watson.local/pharma#groundedIn> ?a }
+            }""" ] .
+
+<http://watson.local/pharma> sh:declare [ sh:prefix "Watson" ; sh:namespace "http://watson.local/pharma#"^^xsd:anyURI ] .

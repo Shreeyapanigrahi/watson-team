@@ -1,0 +1,9 @@
+# Layer 2 - Semantic Foundation (Python 3.13). Installed on top of layer1/requirements.txt (spaCy, FastAPI, pytest come from there).
+# Versions below are the ones the tests were run with; the first run of the embedder downloads a ~90 MB ONNX model (fastembed, free, local).
+rdflib==7.6.0          # the knowledge graph
+pyshacl==0.40.1        # SHACL validation of the graph
+owlrl==7.6.2           # OWL RL inference for the SPARQL queries that need it
+faiss-cpu==1.15.1      # vector index
+fastembed==0.9.1       # all-MiniLM-L6-v2 through ONNX (no PyTorch)
+rapidfuzz==3.14.6      # fuzzy match of entity names
+numpy==2.5.4

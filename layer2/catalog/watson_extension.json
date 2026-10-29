@@ -1,0 +1,1736 @@
+{
+ "version": 1,
+ "created": "2026-10-28T11:38:17+00:00",
+ "origin": "Watson extension. Not part of the Databricks model.",
+ "instances": {
+  "Brand": [
+   {
+    "id": "Brand_keytrava",
+    "label": "Keytrava",
+    "attributes": {
+     "commercial.brand.brand_name": "Keytrava",
+     "commercial.brand.global_brand_owner": "Aldenmoor Pharma"
+    },
+    "relations": {
+     "drug": "Drug_pemvrolimab",
+     "therapeutic_area": "TA_oncology",
+     "indications": [
+      "Indication_non_small_cell_lung_cancer",
+      "Indication_melanoma",
+      "Indication_renal_cell_carcinoma"
+     ]
+    }
+   },
+   {
+    "id": "Brand_opdivra",
+    "label": "Opdivra",
+    "attributes": {
+     "commercial.brand.brand_name": "Opdivra",
+     "commercial.brand.global_brand_owner": "Corvane Therapeutics"
+    },
+    "relations": {
+     "drug": "Drug_nivoltrimab",
+     "therapeutic_area": "TA_oncology",
+     "indications": [
+      "Indication_non_small_cell_lung_cancer",
+      "Indication_melanoma"
+     ]
+    }
+   },
+   {
+    "id": "Brand_tagrisa",
+    "label": "Tagrisa",
+    "attributes": {
+     "commercial.brand.brand_name": "Tagrisa",
+     "commercial.brand.global_brand_owner": "Helvara Biosciences"
+    },
+    "relations": {
+     "drug": "Drug_oselvertinib",
+     "therapeutic_area": "TA_oncology",
+     "indications": [
+      "Indication_egfr_mutant_nsclc",
+      "Indication_non_small_cell_lung_cancer"
+     ]
+    }
+   },
+   {
+    "id": "Brand_lumakro",
+    "label": "Lumakro",
+    "attributes": {
+     "commercial.brand.brand_name": "Lumakro",
+     "commercial.brand.global_brand_owner": "Norquist Health"
+    },
+    "relations": {
+     "drug": "Drug_sotavacib",
+     "therapeutic_area": "TA_oncology",
+     "indications": [
+      "Indication_kras_g12c_mutant_nsclc",
+      "Indication_non_small_cell_lung_cancer"
+     ]
+    }
+   },
+   {
+    "id": "Brand_enhertra",
+    "label": "Enhertra",
+    "attributes": {
+     "commercial.brand.brand_name": "Enhertra",
+     "commercial.brand.global_brand_owner": "Aldenmoor Pharma"
+    },
+    "relations": {
+     "drug": "Drug_trasdelutecan",
+     "therapeutic_area": "TA_oncology",
+     "indications": [
+      "Indication_her2_positive_breast_cancer"
+     ]
+    }
+   },
+   {
+    "id": "Brand_trodelvia",
+    "label": "Trodelvia",
+    "attributes": {
+     "commercial.brand.brand_name": "Trodelvia",
+     "commercial.brand.global_brand_owner": "Helvara Biosciences"
+    },
+    "relations": {
+     "drug": "Drug_sacitodrinan",
+     "therapeutic_area": "TA_oncology",
+     "indications": [
+      "Indication_triple_negative_breast_cancer"
+     ]
+    }
+   },
+   {
+    "id": "Brand_entrestra",
+    "label": "Entrestra",
+    "attributes": {
+     "commercial.brand.brand_name": "Entrestra",
+     "commercial.brand.global_brand_owner": "Corvane Therapeutics"
+    },
+    "relations": {
+     "drug": "Drug_sacuvartan",
+     "therapeutic_area": "TA_cardiology",
+     "indications": [
+      "Indication_heart_failure_with_reduced_ejection_fraction"
+     ]
+    }
+   },
+   {
+    "id": "Brand_jardiva",
+    "label": "Jardiva",
+    "attributes": {
+     "commercial.brand.brand_name": "Jardiva",
+     "commercial.brand.global_brand_owner": "Norquist Health"
+    },
+    "relations": {
+     "drug": "Drug_empagrazin",
+     "therapeutic_area": "TA_cardiology",
+     "indications": [
+      "Indication_heart_failure_with_reduced_ejection_fraction",
+      "Indication_heart_failure_with_preserved_ejection_fraction"
+     ]
+    }
+   },
+   {
+    "id": "Brand_verquvia",
+    "label": "Verquvia",
+    "attributes": {
+     "commercial.brand.brand_name": "Verquvia",
+     "commercial.brand.global_brand_owner": "Aldenmoor Pharma"
+    },
+    "relations": {
+     "drug": "Drug_verciguat",
+     "therapeutic_area": "TA_cardiology",
+     "indications": [
+      "Indication_heart_failure_with_reduced_ejection_fraction"
+     ]
+    }
+   },
+   {
+    "id": "Brand_eliquex",
+    "label": "Eliquex",
+    "attributes": {
+     "commercial.brand.brand_name": "Eliquex",
+     "commercial.brand.global_brand_owner": "Helvara Biosciences"
+    },
+    "relations": {
+     "drug": "Drug_apixaprin",
+     "therapeutic_area": "TA_cardiology",
+     "indications": [
+      "Indication_atrial_fibrillation"
+     ]
+    }
+   },
+   {
+    "id": "Brand_ocrevia",
+    "label": "Ocrevia",
+    "attributes": {
+     "commercial.brand.brand_name": "Ocrevia",
+     "commercial.brand.global_brand_owner": "Corvane Therapeutics"
+    },
+    "relations": {
+     "drug": "Drug_ocrelizimab",
+     "therapeutic_area": "TA_neurology",
+     "indications": [
+      "Indication_multiple_sclerosis"
+     ]
+    }
+   },
+   {
+    "id": "Brand_aimovia",
+    "label": "Aimovia",
+    "attributes": {
+     "commercial.brand.brand_name": "Aimovia",
+     "commercial.brand.global_brand_owner": "Norquist Health"
+    },
+    "relations": {
+     "drug": "Drug_eremunab",
+     "therapeutic_area": "TA_neurology",
+     "indications": [
+      "Indication_migraine"
+     ]
+    }
+   },
+   {
+    "id": "Brand_leqembra",
+    "label": "Leqembra",
+    "attributes": {
+     "commercial.brand.brand_name": "Leqembra",
+     "commercial.brand.global_brand_owner": "Aldenmoor Pharma"
+    },
+    "relations": {
+     "drug": "Drug_lecanemimab",
+     "therapeutic_area": "TA_neurology",
+     "indications": [
+      "Indication_alzheimer_s_disease"
+     ]
+    }
+   },
+   {
+    "id": "Brand_humivex",
+    "label": "Humivex",
+    "attributes": {
+     "commercial.brand.brand_name": "Humivex",
+     "commercial.brand.global_brand_owner": "Helvara Biosciences"
+    },
+    "relations": {
+     "drug": "Drug_adalimutab",
+     "therapeutic_area": "TA_immunology",
+     "indications": [
+      "Indication_plaque_psoriasis",
+      "Indication_rheumatoid_arthritis",
+      "Indication_psoriatic_arthritis"
+     ]
+    }
+   },
+   {
+    "id": "Brand_adalibra",
+    "label": "Adalibra",
+    "attributes": {
+     "commercial.brand.brand_name": "Adalibra",
+     "commercial.brand.global_brand_owner": "Corvane Therapeutics"
+    },
+    "relations": {
+     "drug": "Drug_adalimutab",
+     "therapeutic_area": "TA_immunology",
+     "indications": [
+      "Indication_plaque_psoriasis",
+      "Indication_rheumatoid_arthritis"
+     ]
+    }
+   },
+   {
+    "id": "Brand_cosentex",
+    "label": "Cosentex",
+    "attributes": {
+     "commercial.brand.brand_name": "Cosentex",
+     "commercial.brand.global_brand_owner": "Corvane Therapeutics"
+    },
+    "relations": {
+     "drug": "Drug_secukimab",
+     "therapeutic_area": "TA_immunology",
+     "indications": [
+      "Indication_plaque_psoriasis",
+      "Indication_psoriatic_arthritis"
+     ]
+    }
+   },
+   {
+    "id": "Brand_skyrixa",
+    "label": "Skyrixa",
+    "attributes": {
+     "commercial.brand.brand_name": "Skyrixa",
+     "commercial.brand.global_brand_owner": "Norquist Health"
+    },
+    "relations": {
+     "drug": "Drug_risankimab",
+     "therapeutic_area": "TA_immunology",
+     "indications": [
+      "Indication_plaque_psoriasis",
+      "Indication_psoriatic_arthritis"
+     ]
+    }
+   },
+   {
+    "id": "Brand_dupixa",
+    "label": "Dupixa",
+    "attributes": {
+     "commercial.brand.brand_name": "Dupixa",
+     "commercial.brand.global_brand_owner": "Aldenmoor Pharma"
+    },
+    "relations": {
+     "drug": "Drug_dupilumib",
+     "therapeutic_area": "TA_immunology",
+     "indications": [
+      "Indication_atopic_dermatitis"
+     ]
+    }
+   }
+  ],
+  "Drug": [
+   {
+    "id": "Drug_pemvrolimab",
+    "label": "pemvrolimab",
+    "attributes": {
+     "product.drug_product.product_name": "pemvrolimab",
+     "product.drug_product.moa": "Blocks the PD-1 receptor to restore T-cell activity",
+     "masterdata.atc_classification.atc_code": "L01FF91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_pd_1_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_nivoltrimab",
+    "label": "nivoltrimab",
+    "attributes": {
+     "product.drug_product.product_name": "nivoltrimab",
+     "product.drug_product.moa": "Blocks the PD-1 receptor to restore T-cell activity",
+     "masterdata.atc_classification.atc_code": "L01FF92"
+    },
+    "relations": {
+     "drug_class": "DrugClass_pd_1_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_oselvertinib",
+    "label": "oselvertinib",
+    "attributes": {
+     "product.drug_product.product_name": "oselvertinib",
+     "product.drug_product.moa": "Inhibits mutant EGFR signalling",
+     "masterdata.atc_classification.atc_code": "L01EB91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_egfr_tyrosine_kinase_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_sotavacib",
+    "label": "sotavacib",
+    "attributes": {
+     "product.drug_product.product_name": "sotavacib",
+     "product.drug_product.moa": "Locks mutant KRAS G12C in its inactive state",
+     "masterdata.atc_classification.atc_code": "L01XX91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_kras_g12c_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_trasdelutecan",
+    "label": "trasdelutecan",
+    "attributes": {
+     "product.drug_product.product_name": "trasdelutecan",
+     "product.drug_product.moa": "Delivers a topoisomerase inhibitor to HER2-expressing cells",
+     "masterdata.atc_classification.atc_code": "L01FD91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_her2_antibody_drug_conjugate"
+    }
+   },
+   {
+    "id": "Drug_sacitodrinan",
+    "label": "sacitodrinan",
+    "attributes": {
+     "product.drug_product.product_name": "sacitodrinan",
+     "product.drug_product.moa": "Delivers a cytotoxic payload to TROP2-expressing cells",
+     "masterdata.atc_classification.atc_code": "L01FX91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_trop2_antibody_drug_conjugate"
+    }
+   },
+   {
+    "id": "Drug_sacuvartan",
+    "label": "sacuvartan",
+    "attributes": {
+     "product.drug_product.product_name": "sacuvartan",
+     "product.drug_product.moa": "Combines neprilysin inhibition with angiotensin receptor blockade",
+     "masterdata.atc_classification.atc_code": "C09DX91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_angiotensin_receptor_neprilysin_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_empagrazin",
+    "label": "empagrazin",
+    "attributes": {
+     "product.drug_product.product_name": "empagrazin",
+     "product.drug_product.moa": "Inhibits renal glucose and sodium reabsorption",
+     "masterdata.atc_classification.atc_code": "A10BK91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_sglt2_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_verciguat",
+    "label": "verciguat",
+    "attributes": {
+     "product.drug_product.product_name": "verciguat",
+     "product.drug_product.moa": "Stimulates soluble guanylate cyclase to improve vascular tone",
+     "masterdata.atc_classification.atc_code": "C01EB91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_soluble_guanylate_cyclase_stimulator"
+    }
+   },
+   {
+    "id": "Drug_apixaprin",
+    "label": "apixaprin",
+    "attributes": {
+     "product.drug_product.product_name": "apixaprin",
+     "product.drug_product.moa": "Inhibits factor Xa to prevent clot formation",
+     "masterdata.atc_classification.atc_code": "B01AF91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_factor_xa_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_ocrelizimab",
+    "label": "ocrelizimab",
+    "attributes": {
+     "product.drug_product.product_name": "ocrelizimab",
+     "product.drug_product.moa": "Depletes CD20-positive B cells",
+     "masterdata.atc_classification.atc_code": "L04AA91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_anti_cd20_antibody"
+    }
+   },
+   {
+    "id": "Drug_eremunab",
+    "label": "eremunab",
+    "attributes": {
+     "product.drug_product.product_name": "eremunab",
+     "product.drug_product.moa": "Blocks the CGRP receptor to prevent migraine attacks",
+     "masterdata.atc_classification.atc_code": "N02CD91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_cgrp_receptor_antibody"
+    }
+   },
+   {
+    "id": "Drug_lecanemimab",
+    "label": "lecanemimab",
+    "attributes": {
+     "product.drug_product.product_name": "lecanemimab",
+     "product.drug_product.moa": "Clears amyloid-beta plaques",
+     "masterdata.atc_classification.atc_code": "N06DX91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_anti_amyloid_antibody"
+    }
+   },
+   {
+    "id": "Drug_adalimutab",
+    "label": "adalimutab",
+    "attributes": {
+     "product.drug_product.product_name": "adalimutab",
+     "product.drug_product.moa": "Neutralises tumour necrosis factor alpha",
+     "masterdata.atc_classification.atc_code": "L04AB91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_tnf_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_secukimab",
+    "label": "secukimab",
+    "attributes": {
+     "product.drug_product.product_name": "secukimab",
+     "product.drug_product.moa": "Neutralises interleukin-17A",
+     "masterdata.atc_classification.atc_code": "L04AC91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_il_17a_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_risankimab",
+    "label": "risankimab",
+    "attributes": {
+     "product.drug_product.product_name": "risankimab",
+     "product.drug_product.moa": "Blocks the p19 subunit of interleukin-23",
+     "masterdata.atc_classification.atc_code": "L04AC92"
+    },
+    "relations": {
+     "drug_class": "DrugClass_il_23_inhibitor"
+    }
+   },
+   {
+    "id": "Drug_dupilumib",
+    "label": "dupilumib",
+    "attributes": {
+     "product.drug_product.product_name": "dupilumib",
+     "product.drug_product.moa": "Blocks the shared IL-4 receptor alpha subunit",
+     "masterdata.atc_classification.atc_code": "D11AH91"
+    },
+    "relations": {
+     "drug_class": "DrugClass_il_4_il_13_receptor_antagonist"
+    }
+   }
+  ],
+  "DrugClass": [
+   {
+    "id": "DrugClass_pd_1_inhibitor",
+    "label": "PD-1 inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "PD-1 inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_egfr_tyrosine_kinase_inhibitor",
+    "label": "EGFR tyrosine kinase inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "EGFR tyrosine kinase inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_kras_g12c_inhibitor",
+    "label": "KRAS G12C inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "KRAS G12C inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_her2_antibody_drug_conjugate",
+    "label": "HER2 antibody-drug conjugate",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "HER2 antibody-drug conjugate"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_trop2_antibody_drug_conjugate",
+    "label": "TROP2 antibody-drug conjugate",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "TROP2 antibody-drug conjugate"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_angiotensin_receptor_neprilysin_inhibitor",
+    "label": "Angiotensin receptor-neprilysin inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "Angiotensin receptor-neprilysin inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_sglt2_inhibitor",
+    "label": "SGLT2 inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "SGLT2 inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_soluble_guanylate_cyclase_stimulator",
+    "label": "Soluble guanylate cyclase stimulator",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "Soluble guanylate cyclase stimulator"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_factor_xa_inhibitor",
+    "label": "Factor Xa inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "Factor Xa inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_anti_cd20_antibody",
+    "label": "Anti-CD20 antibody",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "Anti-CD20 antibody"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_cgrp_receptor_antibody",
+    "label": "CGRP receptor antibody",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "CGRP receptor antibody"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_anti_amyloid_antibody",
+    "label": "Anti-amyloid antibody",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "Anti-amyloid antibody"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_tnf_inhibitor",
+    "label": "TNF inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "TNF inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_il_17a_inhibitor",
+    "label": "IL-17A inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "IL-17A inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_il_23_inhibitor",
+    "label": "IL-23 inhibitor",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "IL-23 inhibitor"
+    },
+    "relations": {}
+   },
+   {
+    "id": "DrugClass_il_4_il_13_receptor_antagonist",
+    "label": "IL-4/IL-13 receptor antagonist",
+    "attributes": {
+     "product.therapeutic_area.therapeutic_class": "IL-4/IL-13 receptor antagonist"
+    },
+    "relations": {}
+   }
+  ],
+  "Indication": [
+   {
+    "id": "Indication_lung_cancer",
+    "label": "lung cancer",
+    "grouping": true,
+    "attributes": {
+     "product.indication.indication_name": "lung cancer"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_breast_cancer",
+    "label": "breast cancer",
+    "grouping": true,
+    "attributes": {
+     "product.indication.indication_name": "breast cancer"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_heart_failure",
+    "label": "heart failure",
+    "grouping": true,
+    "attributes": {
+     "product.indication.indication_name": "heart failure"
+    },
+    "relations": {
+     "therapeutic_area": "TA_cardiology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_non_small_cell_lung_cancer",
+    "label": "non-small cell lung cancer",
+    "aliases": [
+     "NSCLC"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "non-small cell lung cancer"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": "Indication_lung_cancer"
+    }
+   },
+   {
+    "id": "Indication_egfr_mutant_nsclc",
+    "label": "EGFR-mutant NSCLC",
+    "aliases": [
+     "EGFR-mutant non-small cell lung cancer"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "EGFR-mutant NSCLC"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": "Indication_non_small_cell_lung_cancer"
+    }
+   },
+   {
+    "id": "Indication_kras_g12c_mutant_nsclc",
+    "label": "KRAS G12C-mutant NSCLC",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "KRAS G12C-mutant NSCLC"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": "Indication_non_small_cell_lung_cancer"
+    }
+   },
+   {
+    "id": "Indication_small_cell_lung_cancer",
+    "label": "small cell lung cancer",
+    "aliases": [
+     "SCLC"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "small cell lung cancer"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": "Indication_lung_cancer"
+    }
+   },
+   {
+    "id": "Indication_her2_positive_breast_cancer",
+    "label": "HER2-positive breast cancer",
+    "aliases": [
+     "HER2+ breast cancer"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "HER2-positive breast cancer"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": "Indication_breast_cancer"
+    }
+   },
+   {
+    "id": "Indication_triple_negative_breast_cancer",
+    "label": "triple-negative breast cancer",
+    "aliases": [
+     "TNBC"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "triple-negative breast cancer"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": "Indication_breast_cancer"
+    }
+   },
+   {
+    "id": "Indication_melanoma",
+    "label": "melanoma",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "melanoma"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_renal_cell_carcinoma",
+    "label": "renal cell carcinoma",
+    "aliases": [
+     "RCC"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "renal cell carcinoma"
+    },
+    "relations": {
+     "therapeutic_area": "TA_oncology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_heart_failure_with_reduced_ejection_fraction",
+    "label": "heart failure with reduced ejection fraction",
+    "aliases": [
+     "HFrEF"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "heart failure with reduced ejection fraction"
+    },
+    "relations": {
+     "therapeutic_area": "TA_cardiology",
+     "parent": "Indication_heart_failure"
+    }
+   },
+   {
+    "id": "Indication_heart_failure_with_preserved_ejection_fraction",
+    "label": "heart failure with preserved ejection fraction",
+    "aliases": [
+     "HFpEF"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "heart failure with preserved ejection fraction"
+    },
+    "relations": {
+     "therapeutic_area": "TA_cardiology",
+     "parent": "Indication_heart_failure"
+    }
+   },
+   {
+    "id": "Indication_atrial_fibrillation",
+    "label": "atrial fibrillation",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "atrial fibrillation"
+    },
+    "relations": {
+     "therapeutic_area": "TA_cardiology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_multiple_sclerosis",
+    "label": "multiple sclerosis",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "multiple sclerosis"
+    },
+    "relations": {
+     "therapeutic_area": "TA_neurology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_migraine",
+    "label": "migraine",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "migraine"
+    },
+    "relations": {
+     "therapeutic_area": "TA_neurology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_alzheimer_s_disease",
+    "label": "Alzheimer's disease",
+    "aliases": [
+     "Alzheimer disease"
+    ],
+    "attributes": {
+     "product.indication.indication_name": "Alzheimer's disease"
+    },
+    "relations": {
+     "therapeutic_area": "TA_neurology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_plaque_psoriasis",
+    "label": "plaque psoriasis",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "plaque psoriasis"
+    },
+    "relations": {
+     "therapeutic_area": "TA_immunology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_psoriatic_arthritis",
+    "label": "psoriatic arthritis",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "psoriatic arthritis"
+    },
+    "relations": {
+     "therapeutic_area": "TA_immunology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_rheumatoid_arthritis",
+    "label": "rheumatoid arthritis",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "rheumatoid arthritis"
+    },
+    "relations": {
+     "therapeutic_area": "TA_immunology",
+     "parent": null
+    }
+   },
+   {
+    "id": "Indication_atopic_dermatitis",
+    "label": "atopic dermatitis",
+    "aliases": [],
+    "attributes": {
+     "product.indication.indication_name": "atopic dermatitis"
+    },
+    "relations": {
+     "therapeutic_area": "TA_immunology",
+     "parent": null
+    }
+   }
+  ],
+  "TherapeuticArea": [
+   {
+    "id": "TA_oncology",
+    "label": "Oncology",
+    "attributes": {
+     "product.therapeutic_area.area_name": "Oncology"
+    },
+    "relations": {}
+   },
+   {
+    "id": "TA_cardiology",
+    "label": "Cardiology",
+    "attributes": {
+     "product.therapeutic_area.area_name": "Cardiology"
+    },
+    "relations": {}
+   },
+   {
+    "id": "TA_neurology",
+    "label": "Neurology",
+    "attributes": {
+     "product.therapeutic_area.area_name": "Neurology"
+    },
+    "relations": {}
+   },
+   {
+    "id": "TA_immunology",
+    "label": "Immunology",
+    "attributes": {
+     "product.therapeutic_area.area_name": "Immunology"
+    },
+    "relations": {}
+   }
+  ],
+  "Geography": [
+   {
+    "id": "Geo_DE",
+    "label": "Germany",
+    "kind": "country",
+    "aliases": [
+     "DE"
+    ],
+    "attributes": {
+     "masterdata.country.country_name": "Germany",
+     "masterdata.country.iso_alpha_2_code": "DE",
+     "masterdata.country.region": "EU",
+     "masterdata.country.reimbursement_framework_type": "Statutory health insurance",
+     "masterdata.country.regulatory_authority_name": "BfArM / EMA"
+    },
+    "relations": {
+     "region": "GeoRegion_EU"
+    }
+   },
+   {
+    "id": "Geo_FR",
+    "label": "France",
+    "kind": "country",
+    "aliases": [
+     "FR"
+    ],
+    "attributes": {
+     "masterdata.country.country_name": "France",
+     "masterdata.country.iso_alpha_2_code": "FR",
+     "masterdata.country.region": "EU",
+     "masterdata.country.reimbursement_framework_type": "National health insurance",
+     "masterdata.country.regulatory_authority_name": "ANSM / EMA"
+    },
+    "relations": {
+     "region": "GeoRegion_EU"
+    }
+   },
+   {
+    "id": "Geo_IT",
+    "label": "Italy",
+    "kind": "country",
+    "aliases": [
+     "IT"
+    ],
+    "attributes": {
+     "masterdata.country.country_name": "Italy",
+     "masterdata.country.iso_alpha_2_code": "IT",
+     "masterdata.country.region": "EU",
+     "masterdata.country.reimbursement_framework_type": "Regional national health service",
+     "masterdata.country.regulatory_authority_name": "AIFA / EMA"
+    },
+    "relations": {
+     "region": "GeoRegion_EU"
+    }
+   },
+   {
+    "id": "Geo_ES",
+    "label": "Spain",
+    "kind": "country",
+    "aliases": [
+     "ES"
+    ],
+    "attributes": {
+     "masterdata.country.country_name": "Spain",
+     "masterdata.country.iso_alpha_2_code": "ES",
+     "masterdata.country.region": "EU",
+     "masterdata.country.reimbursement_framework_type": "Regional national health service",
+     "masterdata.country.regulatory_authority_name": "AEMPS / EMA"
+    },
+    "relations": {
+     "region": "GeoRegion_EU"
+    }
+   },
+   {
+    "id": "Geo_UK",
+    "label": "United Kingdom",
+    "kind": "country",
+    "aliases": [
+     "UK"
+    ],
+    "attributes": {
+     "masterdata.country.country_name": "United Kingdom",
+     "masterdata.country.iso_alpha_2_code": "UK",
+     "masterdata.country.region": "EU",
+     "masterdata.country.reimbursement_framework_type": "National health service",
+     "masterdata.country.regulatory_authority_name": "MHRA"
+    },
+    "relations": {
+     "region": "GeoRegion_EU"
+    }
+   },
+   {
+    "id": "Geo_US",
+    "label": "United States",
+    "kind": "country",
+    "aliases": [
+     "USA",
+     "U.S."
+    ],
+    "attributes": {
+     "masterdata.country.country_name": "United States",
+     "masterdata.country.iso_alpha_2_code": "US",
+     "masterdata.country.region": "US",
+     "masterdata.country.reimbursement_framework_type": "Mixed commercial and government",
+     "masterdata.country.regulatory_authority_name": "FDA"
+    },
+    "relations": {
+     "region": "GeoRegion_US"
+    }
+   },
+   {
+    "id": "Geo_JP",
+    "label": "Japan",
+    "kind": "country",
+    "aliases": [
+     "JP"
+    ],
+    "attributes": {
+     "masterdata.country.country_name": "Japan",
+     "masterdata.country.iso_alpha_2_code": "JP",
+     "masterdata.country.region": "APAC",
+     "masterdata.country.reimbursement_framework_type": "National health insurance",
+     "masterdata.country.regulatory_authority_name": "PMDA"
+    },
+    "relations": {
+     "region": "GeoRegion_APAC"
+    }
+   },
+   {
+    "id": "GeoRegion_EU",
+    "label": "EU",
+    "kind": "region",
+    "aliases": [],
+    "attributes": {
+     "masterdata.country.region": "EU"
+    },
+    "relations": {}
+   },
+   {
+    "id": "GeoRegion_US",
+    "label": "US",
+    "kind": "region",
+    "aliases": [],
+    "attributes": {
+     "masterdata.country.region": "US"
+    },
+    "relations": {}
+   },
+   {
+    "id": "GeoRegion_APAC",
+    "label": "APAC",
+    "kind": "region",
+    "aliases": [],
+    "attributes": {
+     "masterdata.country.region": "APAC"
+    },
+    "relations": {}
+   },
+   {
+    "id": "GeoRegion_GLOBAL",
+    "label": "GLOBAL",
+    "kind": "region",
+    "aliases": [],
+    "attributes": {
+     "masterdata.country.region": "GLOBAL"
+    },
+    "relations": {}
+   }
+  ]
+ },
+ "domains": [
+  {
+   "name": "pmr",
+   "description": "Primary market research documents as Watson governs them. Not part of the Databricks model.",
+   "tables": [
+    {
+     "name": "documents",
+     "primary_key": "document_uri",
+     "description": "One row per governed market-research document (source of truth: Layer 1 lifecycle store).",
+     "columns": [
+      {
+       "name": "document_uri",
+       "type": "STRING",
+       "description": "Watson document identifier, e.g. Watson:Doc_001."
+      },
+      {
+       "name": "title",
+       "type": "STRING",
+       "description": "Extracted or reviewer-set title."
+      },
+      {
+       "name": "study_type",
+       "type": "STRING",
+       "description": "One of the six PMR study types."
+      },
+      {
+       "name": "therapeutic_area",
+       "type": "STRING",
+       "description": "Therapeutic area from the taxonomy.",
+       "foreign_key_to": "product.therapeutic_area.area_name"
+      },
+      {
+       "name": "geography",
+       "type": "STRING",
+       "description": "EU, US, APAC or GLOBAL."
+      },
+      {
+       "name": "lifecycle_state",
+       "type": "STRING",
+       "description": "DRAFT, UNDER_REVIEW, ACTIVE, ARCHIVED or REJECTED."
+      },
+      {
+       "name": "sensitivity_level",
+       "type": "STRING",
+       "description": "PUBLIC, INTERNAL, RESTRICTED or CONFIDENTIAL.",
+       "tags": [
+        "classification_attribute"
+       ]
+      },
+      {
+       "name": "quality_score",
+       "type": "DECIMAL(5,4)",
+       "description": "Weighted quality score, 0 to 1."
+      },
+      {
+       "name": "expiry_date",
+       "type": "DATE",
+       "description": "Date after which the document returns to review."
+      },
+      {
+       "name": "ingest_timestamp",
+       "type": "TIMESTAMP",
+       "description": "When the document was ingested."
+      },
+      {
+       "name": "reviewed_by",
+       "type": "STRING",
+       "description": "Reviewer who approved it (human in the loop)."
+      }
+     ]
+    },
+    {
+     "name": "chunks",
+     "primary_key": "chunk_uri",
+     "description": "Sub-units of a document; the unit of retrieval and of access control.",
+     "columns": [
+      {
+       "name": "chunk_uri",
+       "type": "STRING",
+       "description": "Watson chunk identifier."
+      },
+      {
+       "name": "document_uri",
+       "type": "STRING",
+       "description": "Parent document.",
+       "foreign_key_to": "pmr.documents.document_uri"
+      },
+      {
+       "name": "chunk_index",
+       "type": "INT",
+       "description": "Position within the document."
+      },
+      {
+       "name": "chunk_text",
+       "type": "STRING",
+       "description": "The text of the chunk."
+      },
+      {
+       "name": "quality_score",
+       "type": "DECIMAL(5,4)",
+       "description": "Inherited from the parent document."
+      },
+      {
+       "name": "sensitivity_level",
+       "type": "STRING",
+       "description": "Inherited from the parent document."
+      },
+      {
+       "name": "faiss_id",
+       "type": "BIGINT",
+       "description": "Row in the vector index."
+      }
+     ]
+    },
+    {
+     "name": "sentiment_assertions",
+     "primary_key": "assertion_uri",
+     "description": "One HCP sentiment score for a brand, in a place, at a time.",
+     "columns": [
+      {
+       "name": "assertion_uri",
+       "type": "STRING",
+       "description": "Identifier of the assertion."
+      },
+      {
+       "name": "document_uri",
+       "type": "STRING",
+       "description": "Source document.",
+       "foreign_key_to": "pmr.documents.document_uri"
+      },
+      {
+       "name": "brand_name",
+       "type": "STRING",
+       "description": "Brand the score is about.",
+       "foreign_key_to": "commercial.brand.brand_name"
+      },
+      {
+       "name": "indication_name",
+       "type": "STRING",
+       "description": "Indication, when the document names one.",
+       "foreign_key_to": "product.indication.indication_name"
+      },
+      {
+       "name": "country_or_region",
+       "type": "STRING",
+       "description": "Where the sentiment applies.",
+       "foreign_key_to": "masterdata.country.country_name"
+      },
+      {
+       "name": "sentiment_score",
+       "type": "DECIMAL(3,2)",
+       "description": "0 (negative) to 1 (positive)."
+      },
+      {
+       "name": "assertion_date",
+       "type": "DATE",
+       "description": "When the sentiment was assessed."
+      }
+     ]
+    },
+    {
+     "name": "knowledge_spaces",
+     "primary_key": "space_id",
+     "description": "Curated named collections of documents.",
+     "columns": [
+      {
+       "name": "space_id",
+       "type": "STRING",
+       "description": "Space identifier."
+      },
+      {
+       "name": "space_name",
+       "type": "STRING",
+       "description": "Display name."
+      },
+      {
+       "name": "space_owner",
+       "type": "STRING",
+       "description": "Responsible user (SPOC or admin)."
+      },
+      {
+       "name": "therapeutic_area",
+       "type": "STRING",
+       "description": "Area the space covers, if any.",
+       "foreign_key_to": "product.therapeutic_area.area_name"
+      },
+      {
+       "name": "membership_rule",
+       "type": "STRING",
+       "description": "Rule deciding which documents belong."
+      }
+     ]
+    },
+    {
+     "name": "lineage_records",
+     "primary_key": "lineage_uri",
+     "description": "One enrichment run over one document.",
+     "columns": [
+      {
+       "name": "lineage_uri",
+       "type": "STRING",
+       "description": "Identifier of the run."
+      },
+      {
+       "name": "document_uri",
+       "type": "STRING",
+       "description": "Document processed.",
+       "foreign_key_to": "pmr.documents.document_uri"
+      },
+      {
+       "name": "processing_timestamp",
+       "type": "TIMESTAMP",
+       "description": "When the run happened."
+      },
+      {
+       "name": "enrichment_model",
+       "type": "STRING",
+       "description": "Embedding model used."
+      },
+      {
+       "name": "catalog_version",
+       "type": "STRING",
+       "description": "Version of this data catalog the run used."
+      },
+      {
+       "name": "chunks_produced",
+       "type": "INT",
+       "description": "Chunks written by the run."
+      },
+      {
+       "name": "triples_written",
+       "type": "INT",
+       "description": "Triples written by the run."
+      },
+      {
+       "name": "reviewed_by",
+       "type": "STRING",
+       "description": "Human reviewer who approved the document."
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "grounding": [
+  {
+   "term": "Brand",
+   "kind": "class",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand"
+   ],
+   "note": "Master record for a pharmaceutical brand."
+  },
+  {
+   "term": "Drug",
+   "kind": "class",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.product.drug_product",
+    "pharmaceuticals_ecm.product.drug_substance",
+    "pharmaceuticals_ecm.masterdata.atc_classification",
+    "pharmaceuticals_ecm.masterdata.inn_registry"
+   ],
+   "note": "Mechanism of action, ATC code and molecular weight all exist as catalog columns. Our fictional drugs have no molecular weight, so none is written."
+  },
+  {
+   "term": "DrugClass",
+   "kind": "class",
+   "status": "partial",
+   "catalog": [
+    "pharmaceuticals_ecm.product.therapeutic_area.therapeutic_class"
+   ],
+   "note": "The catalog has a 'Therapeutic Class' column on the therapeutic-area table, which is not the same thing as a drug class."
+  },
+  {
+   "term": "Indication",
+   "kind": "class",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.product.indication"
+   ],
+   "note": "DOID alignment comes from outside the catalog (see alignments)."
+  },
+  {
+   "term": "TherapeuticArea",
+   "kind": "class",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.product.therapeutic_area"
+   ],
+   "note": ""
+  },
+  {
+   "term": "Geography",
+   "kind": "class",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.masterdata.country"
+   ],
+   "note": "Countries from the table; regions from its 'region' column."
+  },
+  {
+   "term": "HCP",
+   "kind": "class",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.hcp.master",
+    "pharmaceuticals_ecm.hcp.kol_profile"
+   ],
+   "note": "No HCP individuals are created: the catalog tags name and NPI columns as PII, so only specialty and tier would be kept."
+  },
+  {
+   "term": "Document",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.documents"
+   ],
+   "note": "Not in the Databricks model."
+  },
+  {
+   "term": "MarketResearchDocument",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.documents"
+   ],
+   "note": ""
+  },
+  {
+   "term": "DocumentChunk",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.chunks"
+   ],
+   "note": ""
+  },
+  {
+   "term": "SentimentAssertion",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.sentiment_assertions"
+   ],
+   "note": ""
+  },
+  {
+   "term": "CompetitiveLandscape",
+   "kind": "class",
+   "status": "partial",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand.primary_competitor_brands"
+   ],
+   "note": "The catalog only has a free-text list of competitor brands on the brand table."
+  },
+  {
+   "term": "KnowledgeSpace",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.knowledge_spaces"
+   ],
+   "note": ""
+  },
+  {
+   "term": "LineageRecord",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.lineage_records"
+   ],
+   "note": ""
+  },
+  {
+   "term": "ProvisionalEntity",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [],
+   "note": "A candidate entity waiting for a human decision; not in the catalog until approved."
+  },
+  {
+   "term": "CatalogAsset",
+   "kind": "class",
+   "status": "extension",
+   "catalog": [],
+   "note": "Represents a catalog table or column inside the graph so that grounding can be validated."
+  },
+  {
+   "term": "targetedIndication",
+   "kind": "property",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand.indication_id"
+   ],
+   "note": ""
+  },
+  {
+   "term": "inTherapeuticArea",
+   "kind": "property",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand.therapeutic_area_id",
+    "pharmaceuticals_ecm.product.indication.therapeutic_area_id"
+   ],
+   "note": ""
+  },
+  {
+   "term": "containsDrug",
+   "kind": "property",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand.drug_product_id"
+   ],
+   "note": ""
+  },
+  {
+   "term": "isDrugOf",
+   "kind": "property",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand.drug_product_id"
+   ],
+   "note": "Inverse of containsDrug."
+  },
+  {
+   "term": "coversGeography",
+   "kind": "property",
+   "status": "partial",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand.primary_market_country_id"
+   ],
+   "note": "The catalog links a brand to one primary market; a document can cover several places."
+  },
+  {
+   "term": "competesWithin",
+   "kind": "property",
+   "status": "partial",
+   "catalog": [
+    "pharmaceuticals_ecm.commercial.brand.primary_competitor_brands"
+   ],
+   "note": ""
+  },
+  {
+   "term": "mechanismOfAction",
+   "kind": "property",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.product.drug_product.moa"
+   ],
+   "note": ""
+  },
+  {
+   "term": "atcCode",
+   "kind": "property",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.masterdata.atc_classification.atc_code"
+   ],
+   "note": ""
+  },
+  {
+   "term": "molecularWeight",
+   "kind": "property",
+   "status": "grounded",
+   "catalog": [
+    "pharmaceuticals_ecm.product.drug_substance.molecular_weight"
+   ],
+   "note": ""
+  },
+  {
+   "term": "subIndicationOf",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [],
+   "note": "Transitive hierarchy of indications. The catalog's indication table has no parent column."
+  },
+  {
+   "term": "sensitivityLevel",
+   "kind": "property",
+   "status": "partial",
+   "catalog": [
+    "meta:classification_levels"
+   ],
+   "note": "Same four level names as the catalog's classification tags. The catalog defines no order between them."
+  },
+  {
+   "term": "lifecycleState",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.documents.lifecycle_state"
+   ],
+   "note": ""
+  },
+  {
+   "term": "expiry_date",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.documents.expiry_date"
+   ],
+   "note": ""
+  },
+  {
+   "term": "quality_score",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.documents.quality_score"
+   ],
+   "note": ""
+  },
+  {
+   "term": "sentimentScore",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.sentiment_assertions.sentiment_score"
+   ],
+   "note": ""
+  },
+  {
+   "term": "assertionDate",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.sentiment_assertions.assertion_date"
+   ],
+   "note": ""
+  },
+  {
+   "term": "isChunkOf",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.chunks.document_uri"
+   ],
+   "note": ""
+  },
+  {
+   "term": "containsDocument",
+   "kind": "property",
+   "status": "extension",
+   "catalog": [
+    "pharmaceuticals_ecm.pmr.documents"
+   ],
+   "note": ""
+  }
+ ],
+ "knowledge_spaces": [
+  {
+   "id": "Space_oncology",
+   "name": "Oncology knowledge space",
+   "owner": "u_spoc",
+   "therapeutic_area": "Oncology",
+   "description": "All approved Oncology market research.",
+   "rule": {
+    "therapeutic_area": [
+     "Oncology"
+    ]
+   }
+  },
+  {
+   "id": "Space_cardiology",
+   "name": "Cardiology knowledge space",
+   "owner": "u_admin",
+   "therapeutic_area": "Cardiology",
+   "description": "All approved Cardiology market research.",
+   "rule": {
+    "therapeutic_area": [
+     "Cardiology"
+    ]
+   }
+  },
+  {
+   "id": "Space_neurology",
+   "name": "Neurology knowledge space",
+   "owner": "u_admin",
+   "therapeutic_area": "Neurology",
+   "description": "All approved Neurology market research.",
+   "rule": {
+    "therapeutic_area": [
+     "Neurology"
+    ]
+   }
+  },
+  {
+   "id": "Space_immunology",
+   "name": "Immunology knowledge space",
+   "owner": "u_admin",
+   "therapeutic_area": "Immunology",
+   "description": "All approved Immunology market research.",
+   "rule": {
+    "therapeutic_area": [
+     "Immunology"
+    ]
+   }
+  },
+  {
+   "id": "Space_competitive",
+   "name": "Competitive intelligence",
+   "owner": "u_admin",
+   "therapeutic_area": null,
+   "description": "Competitive landscape reports across all therapeutic areas.",
+   "rule": {
+    "study_type": [
+     "Competitive Landscape Report"
+    ]
+   }
+  },
+  {
+   "id": "Space_market_access",
+   "name": "Market access",
+   "owner": "u_admin",
+   "therapeutic_area": null,
+   "description": "Reimbursement, payer and pricing insight.",
+   "rule": {
+    "study_type": [
+     "Market Access Insight"
+    ]
+   }
+  }
+ ],
+ "relation_grounding": {
+  "Brand.drug": "commercial.brand.drug_product_id",
+  "Brand.indications": "commercial.brand.indication_id",
+  "Brand.therapeutic_area": "commercial.brand.therapeutic_area_id",
+  "Indication.therapeutic_area": "product.indication.therapeutic_area_id",
+  "Indication.parent": null,
+  "Drug.drug_class": null,
+  "Geography.region": null
+ },
+ "change_log": []
+}

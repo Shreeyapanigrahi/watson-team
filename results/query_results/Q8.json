@@ -1,0 +1,47 @@
+{
+  "id": "Q8",
+  "title": "Expiry surface",
+  "question": "Which active documents expire within the next 90 days?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?document ?title ?expires ?sensitivity\nWHERE {\n  ?document Watson:lifecycleState \"ACTIVE\" ;\n            Watson:documentTitle ?title ;\n            Watson:expiry_date ?expires ;\n            Watson:sensitivityLevel ?sensitivity .\n  FILTER (?expires >= \"2026-10-28\"^^xsd:date && ?expires <= \"2027-01-26\"^^xsd:date)\n}\nORDER BY ?expires",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:56+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "document",
+    "title",
+    "expires",
+    "sensitivity"
+  ],
+  "rows": [
+    {
+      "document": "Watson:Doc_050",
+      "title": "Pharmaceutical Studies and Brand Relationships",
+      "expires": "2026-10-31",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "document": "Watson:Doc_001",
+      "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (EU, 2021)",
+      "expires": "2026-11-27",
+      "sensitivity": "INTERNAL"
+    },
+    {
+      "document": "Watson:Doc_048",
+      "title": "Clinical Study Report",
+      "expires": "2026-11-28",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "document": "Watson:Doc_034",
+      "title": "KOL Interview Summary: Aimovia in Germany (2024)",
+      "expires": "2026-12-02",
+      "sensitivity": "RESTRICTED"
+    }
+  ],
+  "count": 4,
+  "seconds": 0.032
+}

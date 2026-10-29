@@ -1,0 +1,71 @@
+{
+  "id": "Q2",
+  "title": "Negative sentiment surface",
+  "question": "Which brand and geography pairs have an average HCP sentiment below 0.4 in active documents?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?brand ?geography (ROUND(AVG(?score) * 100) / 100 AS ?avgSentiment) (COUNT(?s) AS ?assertions)\nWHERE {\n  ?s a Watson:SentimentAssertion ;\n     Watson:forBrand ?b ;\n     Watson:forGeography ?g ;\n     Watson:sentimentScore ?score ;\n     Watson:derivedFrom ?chunk .\n  ?chunk Watson:isChunkOf ?doc .\n  ?doc Watson:lifecycleState \"ACTIVE\" .\n  ?b rdfs:label ?brand .\n  ?g rdfs:label ?geography .\n}\nGROUP BY ?brand ?geography\nHAVING (AVG(?score) < 0.4)\nORDER BY ?avgSentiment",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:51+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "brand",
+    "geography",
+    "avgSentiment",
+    "assertions"
+  ],
+  "rows": [
+    {
+      "brand": "Trodelvia",
+      "geography": "United States",
+      "avgSentiment": 0.28,
+      "assertions": 1
+    },
+    {
+      "brand": "Opdivra",
+      "geography": "US",
+      "avgSentiment": 0.3,
+      "assertions": 1
+    },
+    {
+      "brand": "Verquvia",
+      "geography": "GLOBAL",
+      "avgSentiment": 0.31,
+      "assertions": 1
+    },
+    {
+      "brand": "Opdivra",
+      "geography": "EU",
+      "avgSentiment": 0.32,
+      "assertions": 2
+    },
+    {
+      "brand": "Cosentex",
+      "geography": "US",
+      "avgSentiment": 0.33,
+      "assertions": 1
+    },
+    {
+      "brand": "Keytrava",
+      "geography": "France",
+      "avgSentiment": 0.37,
+      "assertions": 1
+    },
+    {
+      "brand": "Humivex",
+      "geography": "US",
+      "avgSentiment": 0.37,
+      "assertions": 1
+    },
+    {
+      "brand": "Keytrava",
+      "geography": "EU",
+      "avgSentiment": 0.38,
+      "assertions": 2
+    }
+  ],
+  "count": 8,
+  "seconds": 0.078
+}

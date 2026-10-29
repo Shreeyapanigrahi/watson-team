@@ -31,6 +31,11 @@ ROLE_ACTIONS = {
     "view_audit": {"ADMIN"},
     "create_space": {"SPOC", "ADMIN"},  # used by Layer 2
     "edit_taxonomy": {"SPOC", "ADMIN"},
+    # Layer 2 actions
+    "enrich": {"SPOC", "ADMIN"},              # re-run enrichment for a document
+    "validate_graph": {"SPOC", "ADMIN"},      # run the SHACL validation
+    "manage_entities": {"SPOC", "ADMIN"},     # decide on provisional entities (changes the catalog)
+    "run_queries": {"ADMIN"},                 # saved and custom SPARQL: results are not filtered per user
 }
 
 DEFAULT_USERS = [

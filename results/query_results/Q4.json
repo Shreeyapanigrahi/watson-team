@@ -1,0 +1,42 @@
+{
+  "id": "Q4",
+  "title": "Competitive snapshot (Oncology)",
+  "question": "In Oncology, which brands are compared with the most other brands in active competitive landscape documents?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?brand (COUNT(DISTINCT ?rival) AS ?rivals) (GROUP_CONCAT(DISTINCT ?rivalLabel; separator=\", \") AS ?comparedWith)\nWHERE {\n  ?ta rdfs:label \"Oncology\" .\n  ?landscape a Watson:CompetitiveLandscape ;\n             Watson:inTherapeuticArea ?ta ;\n             Watson:describedBy ?doc ;\n             Watson:includesBrand ?b .\n  ?doc Watson:lifecycleState \"ACTIVE\" .\n  ?b rdfs:label ?brand ;\n     Watson:competesWithin ?rival .\n  ?rival rdfs:label ?rivalLabel .\n}\nGROUP BY ?brand\nORDER BY DESC(?rivals) ?brand",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:51+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "brand",
+    "rivals",
+    "comparedWith"
+  ],
+  "rows": [
+    {
+      "brand": "Keytrava",
+      "rivals": 3,
+      "comparedWith": "Lumakro, Opdivra, Tagrisa"
+    },
+    {
+      "brand": "Lumakro",
+      "rivals": 3,
+      "comparedWith": "Keytrava, Opdivra, Tagrisa"
+    },
+    {
+      "brand": "Opdivra",
+      "rivals": 3,
+      "comparedWith": "Keytrava, Lumakro, Tagrisa"
+    },
+    {
+      "brand": "Tagrisa",
+      "rivals": 3,
+      "comparedWith": "Keytrava, Lumakro, Opdivra"
+    }
+  ],
+  "count": 4,
+  "seconds": 0.018
+}

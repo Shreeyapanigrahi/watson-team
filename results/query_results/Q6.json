@@ -1,0 +1,89 @@
+{
+  "id": "Q6",
+  "title": "OWL inference",
+  "question": "Which documents are HCP sentiment studies, although no document is stored with that type?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?document ?title ?state\nWHERE {\n  ?document a Watson:HCPSentimentStudy ;        # stored type is Watson:HCPPerceptionSurvey, a subclass\n            Watson:documentTitle ?title ;\n            Watson:lifecycleState ?state .\n}\nORDER BY ?document",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": "owlrl",
+  "ran_at": "2026-10-28T20:02:52+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "document",
+    "title",
+    "state"
+  ],
+  "rows_without_inference": [],
+  "triples_after_inference": 9633,
+  "rows": [
+    {
+      "document": "Watson:Doc_001",
+      "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (EU, 2021)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_002",
+      "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (US, 2022)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_003",
+      "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (EU, 2023)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_004",
+      "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (US, 2024)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_005",
+      "title": "HCP Perception Survey: Cosentex in plaque psoriasis (EU, 2022)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_007",
+      "title": "HCP Perception Survey: Keytrava in non-small cell lung cancer (US, 2023)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_008",
+      "title": "HCP Perception Survey: Keytrava in non-small cell lung cancer (EU, 2023)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_009",
+      "title": "HCP Perception Survey: Jardiva in heart failure with reduced ejection fraction (US, 2023)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_010",
+      "title": "HCP Perception Survey: Enhertra in HER2-positive breast cancer (EU, 2024)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_011",
+      "title": "HCP Perception Survey: Trodelvia in triple-negative breast cancer (US, 2022)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_012",
+      "title": "HCP Perception Survey: Entrestra in heart failure with reduced ejection fraction (EU, 2021)",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_048",
+      "title": "Clinical Study Report",
+      "state": "ACTIVE"
+    },
+    {
+      "document": "Watson:Doc_050",
+      "title": "Pharmaceutical Studies and Brand Relationships",
+      "state": "ACTIVE"
+    }
+  ],
+  "count": 13,
+  "seconds": 2.603
+}

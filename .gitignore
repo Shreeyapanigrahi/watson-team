@@ -12,3 +12,8 @@ layer1/stores/
 # the brief is course material, not ours to republish
 architecture/watson.pdf
 resources/
+# Layer 2: downloaded embedding model and generated stores
+layer2/models/
+layer2/stores/
+# Layer 3: run history
+layer3/stores/

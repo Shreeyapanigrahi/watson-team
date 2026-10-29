@@ -17,6 +17,7 @@ CLI examples (run from the project root):
 """
 import argparse
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -28,6 +29,8 @@ from .errors import (LifecycleViolationError, MetadataIncompleteError, NotFoundE
 from .jsonstore import LOCK, read_json, write_json
 from .parser import parse_file
 from .vocab import GEOGRAPHY_VALUES, REGIONS, SENSITIVITY_LEVELS, THERAPEUTIC_AREAS
+
+log = logging.getLogger(__name__)
 
 STATES = ["DRAFT", "UNDER_REVIEW", "ACTIVE", "ARCHIVED", "REJECTED"]
 # The brief's table lists ACTIVE -> ARCHIVED only, but 4.8 also sends expired
@@ -117,7 +120,26 @@ def transition(uri: str, new_state: str, actor: str, notes: Optional[str] = None
     rec = _update(uri, apply)
     audit_log.log_event("STATE_TRANSITION", uri, {"from": old, "to": new_state, "actor": actor,
                                                   "notes": notes, **(extra or {})})
+    for hook in list(_STATE_HOOKS):
+        try:
+            hook(uri, old, new_state, actor)
+        except Exception:               # a failing listener must never undo or block a review decision
+            log.exception("state hook %r failed for %s (%s -> %s)", hook, uri, old, new_state)
     return rec
+
+
+# Listeners called after every successful transition: hook(document_uri, old_state, new_state, actor).
+# Layer 2 registers one to enrich a document when it becomes ACTIVE. Layer 1 imports nothing from Layer 2.
+_STATE_HOOKS: list = []
+
+
+def register_state_hook(fn) -> None:
+    if fn not in _STATE_HOOKS:
+        _STATE_HOOKS.append(fn)
+
+
+def clear_state_hooks() -> None:
+    _STATE_HOOKS.clear()
 
 
 def assert_indexable(uri: str) -> None:

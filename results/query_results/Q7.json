@@ -1,0 +1,59 @@
+{
+  "id": "Q7",
+  "title": "Weakest recent sentiment by therapeutic area and region",
+  "question": "Since 2023, where is HCP sentiment weakest, by therapeutic area and region, and how many documents and brands stand behind it?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?therapeuticArea ?region\n       (ROUND(AVG(?score) * 100) / 100 AS ?avgSentiment)\n       (COUNT(DISTINCT ?brand) AS ?brands)\n       (COUNT(DISTINCT ?doc) AS ?documents)\nWHERE {\n  ?s a Watson:SentimentAssertion ;\n     Watson:sentimentScore ?score ;\n     Watson:assertionDate ?date ;\n     Watson:forBrand ?brand ;\n     Watson:forGeography ?geo ;\n     Watson:derivedFrom ?chunk .\n  ?chunk Watson:isChunkOf ?doc .\n  ?doc Watson:lifecycleState \"ACTIVE\" .\n  ?brand Watson:inTherapeuticArea ?ta .\n  ?ta rdfs:label ?therapeuticArea .\n  ?geo Watson:partOfRegion? ?r .                # a country counts for its region; a region counts for itself\n  ?r Watson:geographyKind \"region\" ; rdfs:label ?region .\n  FILTER (?date >= \"2023-01-01\"^^xsd:date)\n}\nGROUP BY ?therapeuticArea ?region\nORDER BY ?avgSentiment",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:55+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "therapeuticArea",
+    "region",
+    "avgSentiment",
+    "brands",
+    "documents"
+  ],
+  "rows": [
+    {
+      "therapeuticArea": "Oncology",
+      "region": "EU",
+      "avgSentiment": 0.51,
+      "brands": 5,
+      "documents": 6
+    },
+    {
+      "therapeuticArea": "Immunology",
+      "region": "US",
+      "avgSentiment": 0.52,
+      "brands": 5,
+      "documents": 2
+    },
+    {
+      "therapeuticArea": "Cardiology",
+      "region": "GLOBAL",
+      "avgSentiment": 0.54,
+      "brands": 3,
+      "documents": 1
+    },
+    {
+      "therapeuticArea": "Oncology",
+      "region": "US",
+      "avgSentiment": 0.55,
+      "brands": 4,
+      "documents": 3
+    },
+    {
+      "therapeuticArea": "Cardiology",
+      "region": "US",
+      "avgSentiment": 0.7,
+      "brands": 1,
+      "documents": 1
+    }
+  ],
+  "count": 5,
+  "seconds": 0.985
+}

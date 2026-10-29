@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import DocumentKnowledge from './DocumentKnowledge'
 import {
   Badge, Empty, ErrorBox, KV, Loading, Notice, ScoreBar, SensitivityBadge, StateBadge, Tabs, fmtDate, fmtDateTime, useAsync,
 } from '../ui'
@@ -68,6 +69,7 @@ export default function DocumentDetail() {
           { id: 'overview', label: 'Overview' },
           { id: 'checks', label: 'Checks' },
           { id: 'content', label: 'Content' },
+          { id: 'knowledge', label: 'Knowledge' },
           { id: 'history', label: 'History' },
         ]}
         value={tab}
@@ -76,6 +78,7 @@ export default function DocumentDetail() {
       {tab === 'overview' && <Overview d={d} />}
       {tab === 'checks' && <Checks d={d} />}
       {tab === 'content' && <Content uri={d.document_uri} />}
+      {tab === 'knowledge' && <DocumentKnowledge uri={d.document_uri} />}
       {tab === 'history' && <History d={d} can={can} />}
     </div>
   )

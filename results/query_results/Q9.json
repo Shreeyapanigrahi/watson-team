@@ -1,0 +1,38 @@
+{
+  "id": "Q9",
+  "title": "Lineage trace",
+  "question": "For one chunk: which document, enrichment run, model, reviewer and catalog version is it derived from?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?chunk ?document ?title ?reviewer ?model ?processed ?triples ?catalogVersion\nWHERE {\n  BIND (<http://watson.local/pharma#Chunk_001_000> AS ?chunk)\n  ?chunk Watson:derivedFrom ?run .\n  ?run Watson:processedDocument ?document ;\n       Watson:reviewedBy ?r ;\n       Watson:enrichmentModel ?model ;\n       Watson:processingTimestamp ?processed ;\n       Watson:triplesWritten ?triples ;\n       Watson:catalogVersion ?catalogVersion .\n  ?document Watson:documentTitle ?title .\n  ?r rdfs:label ?reviewer .\n}",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26",
+    "chunk": "Chunk_001_000"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:56+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "chunk",
+    "document",
+    "title",
+    "reviewer",
+    "model",
+    "processed",
+    "triples",
+    "catalogVersion"
+  ],
+  "rows": [
+    {
+      "chunk": "Watson:Chunk_001_000",
+      "document": "Watson:Doc_001",
+      "title": "HCP Perception Survey: Opdivra in non-small cell lung cancer (EU, 2021)",
+      "reviewer": "u_admin",
+      "model": "all-MiniLM-L6-v2 (ONNX) + spaCy EntityRuler + rapidfuzz",
+      "processed": "2026-10-28T13:50:31+00:00",
+      "triples": 140,
+      "catalogVersion": "562e7e85f794"
+    }
+  ],
+  "count": 1,
+  "seconds": 0.019
+}

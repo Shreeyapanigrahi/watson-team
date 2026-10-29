@@ -1,0 +1,37 @@
+{
+  "id": "Q3",
+  "title": "Sentiment trajectory",
+  "question": "Which brands had an average sentiment above 0.6 before 2023 and below 0.4 from 2023 on?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?brand (ROUND(?early * 100) / 100 AS ?avgBefore2023) (ROUND(?late * 100) / 100 AS ?avgFrom2023)\nWHERE {\n  ?b rdfs:label ?brand .\n  { SELECT ?b (AVG(?score) AS ?early)\n    WHERE { ?b Watson:hasSentiment ?s .\n            ?s Watson:sentimentScore ?score ; Watson:assertionDate ?date ; Watson:derivedFrom ?c .\n            ?c Watson:isChunkOf ?d . ?d Watson:lifecycleState \"ACTIVE\" .\n            FILTER (?date < \"2023-01-01\"^^xsd:date) }\n    GROUP BY ?b HAVING (AVG(?score) > 0.6) }\n  { SELECT ?b (AVG(?score) AS ?late)\n    WHERE { ?b Watson:hasSentiment ?s .\n            ?s Watson:sentimentScore ?score ; Watson:assertionDate ?date ; Watson:derivedFrom ?c .\n            ?c Watson:isChunkOf ?d . ?d Watson:lifecycleState \"ACTIVE\" .\n            FILTER (?date >= \"2023-01-01\"^^xsd:date) }\n    GROUP BY ?b HAVING (AVG(?score) < 0.4) }\n}\nORDER BY ?brand",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:51+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "brand",
+    "avgBefore2023",
+    "avgFrom2023"
+  ],
+  "rows": [
+    {
+      "brand": "Cosentex",
+      "avgBefore2023": 0.7,
+      "avgFrom2023": 0.33
+    },
+    {
+      "brand": "Humivex",
+      "avgBefore2023": 0.74,
+      "avgFrom2023": 0.37
+    },
+    {
+      "brand": "Opdivra",
+      "avgBefore2023": 0.73,
+      "avgFrom2023": 0.29
+    }
+  ],
+  "count": 3,
+  "seconds": 0.308
+}

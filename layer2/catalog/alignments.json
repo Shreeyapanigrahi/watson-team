@@ -1,0 +1,176 @@
+{
+ "looked_up_at": "2026-10-28T11:36:31+00:00",
+ "sources": {
+  "DOID": "https://www.ebi.ac.uk/ols4/api/search (ontology=doid)",
+  "MeSH": "https://id.nlm.nih.gov/mesh/lookup/descriptor",
+  "ChEBI": "https://www.ebi.ac.uk/ols4/api/search (ontology=chebi)"
+ },
+ "rule": "Only exact label or synonym matches are kept. No ID was written from memory.",
+ "indications": {
+  "non-small cell lung cancer": {
+   "id": "DOID:3908",
+   "iri": "http://purl.obolibrary.org/obo/DOID_3908",
+   "label": "lung non-small cell carcinoma",
+   "matched": "Non-small cell lung cancer",
+   "match": "synonym"
+  },
+  "EGFR-mutant NSCLC": {
+   "id": null,
+   "reason": "no exact DOID label or synonym match"
+  },
+  "KRAS G12C-mutant NSCLC": {
+   "id": null,
+   "reason": "no exact DOID label or synonym match"
+  },
+  "small cell lung cancer": {
+   "id": null,
+   "reason": "no exact DOID label or synonym match"
+  },
+  "HER2-positive breast cancer": {
+   "id": "DOID:0060079",
+   "iri": "http://purl.obolibrary.org/obo/DOID_0060079",
+   "label": "HER2 positive breast cancer",
+   "matched": "HER2+ breast cancer",
+   "match": "synonym"
+  },
+  "triple-negative breast cancer": {
+   "id": "DOID:0060081",
+   "iri": "http://purl.obolibrary.org/obo/DOID_0060081",
+   "label": "triple-negative breast cancer",
+   "matched": "triple-negative breast cancer",
+   "match": "label"
+  },
+  "melanoma": {
+   "id": "DOID:1909",
+   "iri": "http://purl.obolibrary.org/obo/DOID_1909",
+   "label": "melanoma",
+   "matched": "melanoma",
+   "match": "label"
+  },
+  "renal cell carcinoma": {
+   "id": "DOID:4450",
+   "iri": "http://purl.obolibrary.org/obo/DOID_4450",
+   "label": "renal cell carcinoma",
+   "matched": "renal cell carcinoma",
+   "match": "label"
+  },
+  "heart failure with reduced ejection fraction": {
+   "id": null,
+   "reason": "no exact DOID label or synonym match"
+  },
+  "heart failure with preserved ejection fraction": {
+   "id": null,
+   "reason": "no exact DOID label or synonym match"
+  },
+  "atrial fibrillation": {
+   "id": "DOID:0060224",
+   "iri": "http://purl.obolibrary.org/obo/DOID_0060224",
+   "label": "atrial fibrillation",
+   "matched": "atrial fibrillation",
+   "match": "label"
+  },
+  "multiple sclerosis": {
+   "id": "DOID:2377",
+   "iri": "http://purl.obolibrary.org/obo/DOID_2377",
+   "label": "multiple sclerosis",
+   "matched": "multiple sclerosis",
+   "match": "label"
+  },
+  "migraine": {
+   "id": "DOID:6364",
+   "iri": "http://purl.obolibrary.org/obo/DOID_6364",
+   "label": "migraine",
+   "matched": "migraine",
+   "match": "label"
+  },
+  "Alzheimer's disease": {
+   "id": "DOID:10652",
+   "iri": "http://purl.obolibrary.org/obo/DOID_10652",
+   "label": "Alzheimer's disease",
+   "matched": "Alzheimer's disease",
+   "match": "label"
+  },
+  "plaque psoriasis": {
+   "id": null,
+   "reason": "no exact DOID label or synonym match"
+  },
+  "psoriatic arthritis": {
+   "id": "DOID:9008",
+   "iri": "http://purl.obolibrary.org/obo/DOID_9008",
+   "label": "psoriatic arthritis",
+   "matched": "psoriatic arthritis",
+   "match": "label"
+  },
+  "rheumatoid arthritis": {
+   "id": "DOID:7148",
+   "iri": "http://purl.obolibrary.org/obo/DOID_7148",
+   "label": "rheumatoid arthritis",
+   "matched": "rheumatoid arthritis",
+   "match": "label"
+  },
+  "atopic dermatitis": {
+   "id": "DOID:3310",
+   "iri": "http://purl.obolibrary.org/obo/DOID_3310",
+   "label": "atopic dermatitis",
+   "matched": "atopic dermatitis",
+   "match": "label"
+  }
+ },
+ "indication_parents": {
+  "lung cancer": {
+   "id": "DOID:1324",
+   "iri": "http://purl.obolibrary.org/obo/DOID_1324",
+   "label": "lung cancer",
+   "matched": "lung cancer",
+   "match": "label"
+  },
+  "breast cancer": {
+   "id": "DOID:1612",
+   "iri": "http://purl.obolibrary.org/obo/DOID_1612",
+   "label": "breast cancer",
+   "matched": "breast cancer",
+   "match": "label"
+  },
+  "heart failure": {
+   "id": null,
+   "reason": "no exact DOID label or synonym match"
+  }
+ },
+ "therapeutic_areas": {
+  "Oncology": {
+   "id": "D009369",
+   "iri": "http://id.nlm.nih.gov/mesh/D009369",
+   "label": "Neoplasms",
+   "match": "label",
+   "category_label": "Neoplasms"
+  },
+  "Cardiology": {
+   "id": "D002318",
+   "iri": "http://id.nlm.nih.gov/mesh/D002318",
+   "label": "Cardiovascular Diseases",
+   "match": "label",
+   "category_label": "Cardiovascular Diseases"
+  },
+  "Neurology": {
+   "id": "D009422",
+   "iri": "http://id.nlm.nih.gov/mesh/D009422",
+   "label": "Nervous System Diseases",
+   "match": "label",
+   "category_label": "Nervous System Diseases"
+  },
+  "Immunology": {
+   "id": "D007154",
+   "iri": "http://id.nlm.nih.gov/mesh/D007154",
+   "label": "Immune System Diseases",
+   "match": "label",
+   "category_label": "Immune System Diseases"
+  }
+ },
+ "drug_class": {
+  "id": "CHEBI:23888",
+  "iri": "http://purl.obolibrary.org/obo/CHEBI_23888",
+  "label": "drug",
+  "matched": "drug",
+  "match": "label"
+ }
+}

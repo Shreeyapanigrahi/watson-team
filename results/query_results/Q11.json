@@ -1,0 +1,66 @@
+{
+  "id": "Q11",
+  "title": "Knowledge space health",
+  "question": "For each knowledge space: how many active documents, their average quality, the latest ingest, and how many archived?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?space (COALESCE(?docs, 0) AS ?documents) (ROUND(?avgQuality * 1000) / 1000 AS ?averageQuality) ?latestIngest (COALESCE(?arch, 0) AS ?archived)\nWHERE {\n  ?sp a Watson:KnowledgeSpace ; Watson:spaceName ?space .\n  OPTIONAL {                                     # a space with no active document still appears, with 0\n    SELECT ?sp (COUNT(DISTINCT ?d) AS ?docs) (AVG(?q) AS ?avgQuality) (MAX(?ing) AS ?latestIngest)\n    WHERE { ?sp Watson:containsDocument ?d .\n            ?d Watson:lifecycleState \"ACTIVE\" ; Watson:quality_score ?q ; Watson:ingest_timestamp ?ing . }\n    GROUP BY ?sp\n  }\n  OPTIONAL {\n    SELECT ?sp (COUNT(DISTINCT ?a) AS ?arch)\n    WHERE { ?sp Watson:containsDocument ?a . ?a Watson:lifecycleState \"ARCHIVED\" }\n    GROUP BY ?sp\n  }\n}\nORDER BY ?space",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:56+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "space",
+    "documents",
+    "averageQuality",
+    "latestIngest",
+    "archived"
+  ],
+  "rows": [
+    {
+      "space": "Cardiology knowledge space",
+      "documents": 9,
+      "averageQuality": 0.623,
+      "latestIngest": "2026-09-28T13:49:45+00:00",
+      "archived": 0
+    },
+    {
+      "space": "Competitive intelligence",
+      "documents": 8,
+      "averageQuality": 0.643,
+      "latestIngest": "2026-09-28T13:49:45+00:00",
+      "archived": 0
+    },
+    {
+      "space": "Immunology knowledge space",
+      "documents": 9,
+      "averageQuality": 0.651,
+      "latestIngest": "2026-08-22T13:49:45+00:00",
+      "archived": 0
+    },
+    {
+      "space": "Market access",
+      "documents": 6,
+      "averageQuality": 0.637,
+      "latestIngest": "2026-09-13T13:49:45+00:00",
+      "archived": 0
+    },
+    {
+      "space": "Neurology knowledge space",
+      "documents": 6,
+      "averageQuality": 0.667,
+      "latestIngest": "2026-09-18T13:49:45+00:00",
+      "archived": 0
+    },
+    {
+      "space": "Oncology knowledge space",
+      "documents": 20,
+      "averageQuality": 0.662,
+      "latestIngest": "2026-10-28T14:08:54+00:00",
+      "archived": 0
+    }
+  ],
+  "count": 6,
+  "seconds": 0.146
+}

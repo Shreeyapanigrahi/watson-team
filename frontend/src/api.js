@@ -46,7 +46,44 @@ const qs = (params = {}) => {
 }
 const enc = encodeURIComponent
 
+// Layer 3 streams one JSON object per line while the pipeline runs. onEvent is called for each as it arrives.
+async function streamAsk(question, mode, onEvent, signal) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
+  let res
+  try {
+    res = await fetch('/api/l3/ask', { method: 'POST', headers, body: JSON.stringify({ question, mode }), signal })
+  } catch (e) {
+    if (e.name === 'AbortError') throw e
+    throw new Error('Cannot reach the server. Start it with: .venv\\Scripts\\python -m uvicorn layer1.api.main:app --port 8000')
+  }
+  if (!res.ok) {
+    if (res.status === 401) onUnauthorized()
+    const data = await res.json().catch(() => null)
+    const detail = Array.isArray(data?.detail) ? data.detail.map((d) => d.msg).join('; ') : data?.detail
+    throw new Error(detail || res.statusText)
+  }
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buf = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buf += decoder.decode(value, { stream: true })
+    let nl
+    while ((nl = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, nl).trim()
+      buf = buf.slice(nl + 1)
+      if (line) onEvent(JSON.parse(line))
+    }
+  }
+  if (buf.trim()) onEvent(JSON.parse(buf))
+}
+
 export const api = {
+  l3Ask: streamAsk,
+  l3Status: () => request('/l3/status'),
+  l3History: () => request('/l3/history'),
   users: () => request('/users'),
   login: (user_id) => request('/login', { method: 'POST', body: { user_id } }),
   me: () => request('/me'),
@@ -68,4 +105,30 @@ export const api = {
   audit: (params) => request(`/audit${qs(params)}`),
   catalog: () => request('/catalog'),
   chunking: () => request('/chunking-comparison'),
+
+  // ---- Layer 2: semantic foundation (everything is filtered by the server to what this user may read)
+  l2Status: () => request('/l2/status'),
+  l2CatalogSummary: () => request('/l2/catalog/summary'),
+  l2CatalogTables: (params) => request(`/l2/catalog/tables${qs(params)}`),
+  l2CatalogTable: (fqn) => request(`/l2/catalog/table${qs({ fqn })}`),
+  l2CatalogSearch: (q, kind) => request(`/l2/catalog/search${qs({ q, kind })}`),
+  l2Mappings: () => request('/l2/catalog/mappings'),
+  l2Ontology: () => request('/l2/ontology'),
+  l2Entities: (params) => request(`/l2/entities${qs(params)}`),
+  l2Entity: (id) => request(`/l2/entities/${enc(id)}`),
+  l2Graph: (params) => request(`/l2/graph${qs(params)}`),
+  l2Spaces: () => request('/l2/spaces'),
+  l2Knowledge: (uri) => request(`/l2/documents/${enc(uri)}/knowledge`),
+  l2Enrich: (uri) => request(`/l2/documents/${enc(uri)}/enrich`, { method: 'POST' }),
+  l2Enrichment: () => request('/l2/enrichment'),
+  l2Provisional: (status) => request(`/l2/provisional${qs({ status })}`),
+  l2Approve: (id, body) => request(`/l2/provisional/${enc(id)}/approve`, { method: 'POST', body }),
+  l2Reject: (id, note) => request(`/l2/provisional/${enc(id)}/reject`, { method: 'POST', body: { note } }),
+  l2Taxonomy: () => request('/l2/taxonomy'),
+  l2AddTerm: (name, label) => request(`/l2/taxonomy/${enc(name)}/terms`, { method: 'POST', body: { label } }),
+  l2Validate: () => request('/l2/validate', { method: 'POST' }),
+  l2ValidateLast: () => request('/l2/validate/last'),
+  l2Queries: () => request('/l2/queries'),
+  l2RunQuery: (id, params, save) => request(`/l2/queries/${enc(id)}/run`, { method: 'POST', body: { params, save: Boolean(save) } }),
+  l2CustomQuery: (sparql) => request('/l2/queries/custom', { method: 'POST', body: { sparql } }),
 }

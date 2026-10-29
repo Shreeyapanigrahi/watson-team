@@ -17,4 +17,8 @@ Rules for this project:
 - Do not commit, push or branch unless asked. The git root is `D:\`, shared with unrelated projects.
 - Do not edit source files with PowerShell `Get-Content | Set-Content` (it corrupted UTF-8 once). Use the Edit tool.
 - Tests: `.venv\Scripts\python -m pytest layer1/tests -q -p no:cacheprovider -c layer1/pytest.ini --rootdir=.`
+- Layer 2 tests (run both together, about 5 minutes): `.venv\Scripts\python -m pytest layer2/tests layer1/tests -q -p no:cacheprovider -c layer2/pytest.ini --rootdir=.`
+- Layer 3 needs `llama-server` running in its own terminal (`.\layer3\start_llm_server.ps1`, model `qwen2.5-3b-instruct` Q4_K_M GGUF). There is no Ollama dependency. Full regression: `.venv\Scripts\python -m pytest layer3/tests layer2/tests layer1/tests -q -p no:cacheprovider -c layer3/pytest.ini --rootdir=.` (Layer 3 tests use a scripted model and need no model server). Diagram: `architecture/layer3_architecture.md`.
+- Do not write Python source through bash heredocs (`\n` inside strings corrupted files three times); use Edit/Write.
+- The three files in `architecture/` (`model.json`, `*.csv`, `*.ttl`) are source data: never modify or move them. The catalog JSON is the single source of truth for entities; the graph and index are rebuilt with `python -m layer2.backfill --reset`.
 - Keep `project_status.md` and `change_log.md` current at each milestone.

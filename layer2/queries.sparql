@@ -1,0 +1,212 @@
+# The eleven SPARQL queries of brief 5.4. Run by layer2/sparql_runner.py; results are saved in results/query_results/.
+#
+# Block format:  "# @key value" lines, then the query. A line "#---" ends a block.
+#   @reasoning owlrl     run on a copy of the graph expanded by the OWL RL reasoner (the plain result is shown next to it)
+#   @data telemetry      also load telemetry_store.json (search events) into the copy the query runs on
+#   @param name=default  a {{name}} placeholder in the query; {{today}} and {{in90}} are always available
+# Every query that reads documents keeps only lifecycleState "ACTIVE": a document that left ACTIVE is history, not evidence.
+
+PREFIX Watson: <http://watson.local/pharma#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+#---
+# @id Q1
+# @title Shared target discovery
+# @question Which indications (counting their sub-indications) are targeted by two or more different drugs, and by which brands?
+SELECT ?indication (COUNT(DISTINCT ?drug) AS ?drugs) (GROUP_CONCAT(DISTINCT ?brandLabel; separator=", ") AS ?brands)
+WHERE {
+  ?brand a Watson:Brand ;
+         rdfs:label ?brandLabel ;
+         Watson:containsDrug ?drug ;
+         Watson:targetedIndication ?narrow .
+  ?narrow Watson:subIndicationOf* ?ind .        # transitive: EGFR-mutant NSCLC counts for NSCLC and for lung cancer
+  ?ind rdfs:label ?indication .
+}
+GROUP BY ?indication
+HAVING (COUNT(DISTINCT ?drug) >= 2)
+ORDER BY DESC(?drugs) ?indication
+#---
+# @id Q2
+# @title Negative sentiment surface
+# @question Which brand and geography pairs have an average HCP sentiment below 0.4 in active documents?
+SELECT ?brand ?geography (ROUND(AVG(?score) * 100) / 100 AS ?avgSentiment) (COUNT(?s) AS ?assertions)
+WHERE {
+  ?s a Watson:SentimentAssertion ;
+     Watson:forBrand ?b ;
+     Watson:forGeography ?g ;
+     Watson:sentimentScore ?score ;
+     Watson:derivedFrom ?chunk .
+  ?chunk Watson:isChunkOf ?doc .
+  ?doc Watson:lifecycleState "ACTIVE" .
+  ?b rdfs:label ?brand .
+  ?g rdfs:label ?geography .
+}
+GROUP BY ?brand ?geography
+HAVING (AVG(?score) < 0.4)
+ORDER BY ?avgSentiment
+#---
+# @id Q3
+# @title Sentiment trajectory
+# @question Which brands had an average sentiment above 0.6 before 2023 and below 0.4 from 2023 on?
+SELECT ?brand (ROUND(?early * 100) / 100 AS ?avgBefore2023) (ROUND(?late * 100) / 100 AS ?avgFrom2023)
+WHERE {
+  ?b rdfs:label ?brand .
+  { SELECT ?b (AVG(?score) AS ?early)
+    WHERE { ?b Watson:hasSentiment ?s .
+            ?s Watson:sentimentScore ?score ; Watson:assertionDate ?date ; Watson:derivedFrom ?c .
+            ?c Watson:isChunkOf ?d . ?d Watson:lifecycleState "ACTIVE" .
+            FILTER (?date < "2023-01-01"^^xsd:date) }
+    GROUP BY ?b HAVING (AVG(?score) > 0.6) }
+  { SELECT ?b (AVG(?score) AS ?late)
+    WHERE { ?b Watson:hasSentiment ?s .
+            ?s Watson:sentimentScore ?score ; Watson:assertionDate ?date ; Watson:derivedFrom ?c .
+            ?c Watson:isChunkOf ?d . ?d Watson:lifecycleState "ACTIVE" .
+            FILTER (?date >= "2023-01-01"^^xsd:date) }
+    GROUP BY ?b HAVING (AVG(?score) < 0.4) }
+}
+ORDER BY ?brand
+#---
+# @id Q4
+# @title Competitive snapshot (Oncology)
+# @question In Oncology, which brands are compared with the most other brands in active competitive landscape documents?
+SELECT ?brand (COUNT(DISTINCT ?rival) AS ?rivals) (GROUP_CONCAT(DISTINCT ?rivalLabel; separator=", ") AS ?comparedWith)
+WHERE {
+  ?ta rdfs:label "Oncology" .
+  ?landscape a Watson:CompetitiveLandscape ;
+             Watson:inTherapeuticArea ?ta ;
+             Watson:describedBy ?doc ;
+             Watson:includesBrand ?b .
+  ?doc Watson:lifecycleState "ACTIVE" .
+  ?b rdfs:label ?brand ;
+     Watson:competesWithin ?rival .
+  ?rival rdfs:label ?rivalLabel .
+}
+GROUP BY ?brand
+ORDER BY DESC(?rivals) ?brand
+#---
+# @id Q5
+# @title Coverage gap
+# @question Which indications have at least one brand but are covered by fewer than two active documents?
+SELECT ?indication (COALESCE(?n, 0) AS ?documents) (MIN(?brandLabel) AS ?exampleBrand)
+WHERE {
+  ?brand Watson:targetedIndication ?i ;
+         rdfs:label ?brandLabel .
+  ?i rdfs:label ?indication .
+  FILTER NOT EXISTS {
+    ?d1 Watson:mentionsIndication ?i ; Watson:lifecycleState "ACTIVE" .
+    ?d2 Watson:mentionsIndication ?i ; Watson:lifecycleState "ACTIVE" .
+    FILTER (?d1 != ?d2)
+  }
+  OPTIONAL { SELECT ?i (COUNT(DISTINCT ?d) AS ?n)
+             WHERE { ?d Watson:mentionsIndication ?i ; Watson:lifecycleState "ACTIVE" }
+             GROUP BY ?i }
+}
+GROUP BY ?indication ?n
+ORDER BY ?documents ?indication
+#---
+# @id Q6
+# @title OWL inference
+# @reasoning owlrl
+# @question Which documents are HCP sentiment studies, although no document is stored with that type?
+SELECT ?document ?title ?state
+WHERE {
+  ?document a Watson:HCPSentimentStudy ;        # stored type is Watson:HCPPerceptionSurvey, a subclass
+            Watson:documentTitle ?title ;
+            Watson:lifecycleState ?state .
+}
+ORDER BY ?document
+#---
+# @id Q7
+# @title Weakest recent sentiment by therapeutic area and region
+# @question Since 2023, where is HCP sentiment weakest, by therapeutic area and region, and how many documents and brands stand behind it?
+SELECT ?therapeuticArea ?region
+       (ROUND(AVG(?score) * 100) / 100 AS ?avgSentiment)
+       (COUNT(DISTINCT ?brand) AS ?brands)
+       (COUNT(DISTINCT ?doc) AS ?documents)
+WHERE {
+  ?s a Watson:SentimentAssertion ;
+     Watson:sentimentScore ?score ;
+     Watson:assertionDate ?date ;
+     Watson:forBrand ?brand ;
+     Watson:forGeography ?geo ;
+     Watson:derivedFrom ?chunk .
+  ?chunk Watson:isChunkOf ?doc .
+  ?doc Watson:lifecycleState "ACTIVE" .
+  ?brand Watson:inTherapeuticArea ?ta .
+  ?ta rdfs:label ?therapeuticArea .
+  ?geo Watson:partOfRegion? ?r .                # a country counts for its region; a region counts for itself
+  ?r Watson:geographyKind "region" ; rdfs:label ?region .
+  FILTER (?date >= "2023-01-01"^^xsd:date)
+}
+GROUP BY ?therapeuticArea ?region
+ORDER BY ?avgSentiment
+#---
+# @id Q8
+# @title Expiry surface
+# @question Which active documents expire within the next 90 days?
+SELECT ?document ?title ?expires ?sensitivity
+WHERE {
+  ?document Watson:lifecycleState "ACTIVE" ;
+            Watson:documentTitle ?title ;
+            Watson:expiry_date ?expires ;
+            Watson:sensitivityLevel ?sensitivity .
+  FILTER (?expires >= "{{today}}"^^xsd:date && ?expires <= "{{in90}}"^^xsd:date)
+}
+ORDER BY ?expires
+#---
+# @id Q9
+# @title Lineage trace
+# @question For one chunk: which document, enrichment run, model, reviewer and catalog version is it derived from?
+# @param chunk=Chunk_001_000
+SELECT ?chunk ?document ?title ?reviewer ?model ?processed ?triples ?catalogVersion
+WHERE {
+  BIND (<http://watson.local/pharma#{{chunk}}> AS ?chunk)
+  ?chunk Watson:derivedFrom ?run .
+  ?run Watson:processedDocument ?document ;
+       Watson:reviewedBy ?r ;
+       Watson:enrichmentModel ?model ;
+       Watson:processingTimestamp ?processed ;
+       Watson:triplesWritten ?triples ;
+       Watson:catalogVersion ?catalogVersion .
+  ?document Watson:documentTitle ?title .
+  ?r rdfs:label ?reviewer .
+}
+#---
+# @id Q10
+# @title ABAC governance audit
+# @data telemetry
+# @question For every role, how many chunks of each sensitivity level did search return, and did any role receive a level above its ceiling?
+SELECT ?role ?sensitivity (COUNT(?event) AS ?retrievals)
+       (IF(?role = "VIEWER" && ?sensitivity IN ("RESTRICTED", "CONFIDENTIAL"), "VIOLATION",
+        IF(?role = "ANALYST" && ?sensitivity = "CONFIDENTIAL", "VIOLATION", "ok")) AS ?verdict)
+WHERE {
+  ?event a Watson:RetrievalEvent ;
+         Watson:userRole ?role ;
+         Watson:retrievedChunk ?chunk .
+  ?chunk Watson:sensitivityLevel ?sensitivity .
+}
+GROUP BY ?role ?sensitivity
+ORDER BY ?role ?sensitivity
+#---
+# @id Q11
+# @title Knowledge space health
+# @question For each knowledge space: how many active documents, their average quality, the latest ingest, and how many archived?
+SELECT ?space (COALESCE(?docs, 0) AS ?documents) (ROUND(?avgQuality * 1000) / 1000 AS ?averageQuality) ?latestIngest (COALESCE(?arch, 0) AS ?archived)
+WHERE {
+  ?sp a Watson:KnowledgeSpace ; Watson:spaceName ?space .
+  OPTIONAL {                                     # a space with no active document still appears, with 0
+    SELECT ?sp (COUNT(DISTINCT ?d) AS ?docs) (AVG(?q) AS ?avgQuality) (MAX(?ing) AS ?latestIngest)
+    WHERE { ?sp Watson:containsDocument ?d .
+            ?d Watson:lifecycleState "ACTIVE" ; Watson:quality_score ?q ; Watson:ingest_timestamp ?ing . }
+    GROUP BY ?sp
+  }
+  OPTIONAL {
+    SELECT ?sp (COUNT(DISTINCT ?a) AS ?arch)
+    WHERE { ?sp Watson:containsDocument ?a . ?a Watson:lifecycleState "ARCHIVED" }
+    GROUP BY ?sp
+  }
+}
+ORDER BY ?space

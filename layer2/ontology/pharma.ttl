@@ -1,0 +1,169 @@
+# Watson pharma ontology (hand-written). Schema only: no instances live here.
+# Instances are written by populate_graph.py (reference data, from the data catalog) and by
+# enrichment_pipeline.py (documents, chunks, entities, sentiment, lineage) into pharma_kg.ttl.
+#
+# Domains are left off properties that are used on more than one class (mentionsBrand is used on
+# chunks AND documents, derivedFrom on chunks AND lineage records). An rdfs:domain would make the
+# OWL RL reasoner infer a wrong type (a document typed as a chunk). SHACL shapes constrain usage instead.
+
+@prefix Watson: <http://watson.local/pharma#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix obo:  <http://purl.obolibrary.org/obo/> .
+
+<http://watson.local/pharma> a owl:Ontology ;
+    rdfs:label "Watson pharma ontology" ;
+    rdfs:comment "Semantic foundation for governed pharma market-research documents. Every term is grounded in the data catalog or declared as a Watson extension (see Watson:groundingStatus, written by populate_graph.py)." .
+
+# ------------------------------------------------------------------ document classes (4 levels deep)
+Watson:Document a owl:Class ; rdfs:label "Document" ;
+    rdfs:comment "Any governed document." .
+Watson:MarketResearchDocument a owl:Class ; rdfs:subClassOf Watson:Document ; rdfs:label "Market research document" ;
+    rdfs:comment "A primary market research (PMR) study. Carries study_type, expiry_date, lifecycleState and sensitivityLevel." .
+Watson:HCPSentimentStudy a owl:Class ; rdfs:subClassOf Watson:MarketResearchDocument ; rdfs:label "HCP sentiment study" ;
+    rdfs:comment "A study whose purpose is to measure how healthcare professionals feel about a brand." .
+Watson:HCPPerceptionSurvey a owl:Class ; rdfs:subClassOf Watson:HCPSentimentStudy ; rdfs:label "HCP perception survey" .
+Watson:CompetitiveLandscapeReport a owl:Class ; rdfs:subClassOf Watson:MarketResearchDocument ; rdfs:label "Competitive landscape report" .
+Watson:IndicationDeepDive a owl:Class ; rdfs:subClassOf Watson:MarketResearchDocument ; rdfs:label "Indication deep dive" .
+Watson:MarketAccessInsight a owl:Class ; rdfs:subClassOf Watson:MarketResearchDocument ; rdfs:label "Market access insight" .
+Watson:KOLInterviewSummary a owl:Class ; rdfs:subClassOf Watson:MarketResearchDocument ; rdfs:label "KOL interview summary" .
+Watson:TherapyAreaLandscape a owl:Class ; rdfs:subClassOf Watson:MarketResearchDocument ; rdfs:label "Therapy area landscape" .
+
+Watson:DocumentChunk a owl:Class ; rdfs:label "Document chunk" ;
+    rdfs:comment "A sub-unit of a document. A first-class class with its own URI (not a blank node) so the vector index, access control and answer citations can all point at it." .
+
+# ------------------------------------------------------------------ domain entities
+Watson:Drug a owl:Class ; rdfs:label "Drug" ;
+    rdfs:comment "An active substance, distinct from the commercial brand that contains it." ;
+    owl:equivalentClass obo:CHEBI_23888 .
+Watson:DrugClass a owl:Class ; rdfs:label "Drug class" ; rdfs:comment "A pharmacological class such as PD-1 inhibitor." .
+Watson:Brand a owl:Class ; rdfs:label "Brand" ; rdfs:comment "A commercial product containing one drug." .
+Watson:Indication a owl:Class ; rdfs:label "Indication" ;
+    rdfs:comment "A disease or condition a brand is used for. Each indication is one shared named individual, not duplicated per brand." .
+Watson:HCP a owl:Class ; rdfs:label "HCP" ;
+    rdfs:comment "A physician, specialist or prescriber who is a research subject. No individuals are created: the catalog tags name and NPI columns as PII." .
+Watson:TherapeuticArea a owl:Class ; rdfs:label "Therapeutic area" .
+Watson:Geography a owl:Class ; rdfs:label "Geography" ; rdfs:comment "A country or a region, with its payer system type." .
+
+Watson:SentimentAssertion a owl:Class ; rdfs:label "Sentiment assertion" ;
+    rdfs:comment "One HCP sentiment score for a Brand, in a Geography, about an Indication, at a date. A first-class node so GROUP BY and AVG work in SPARQL." .
+Watson:CompetitiveLandscape a owl:Class ; rdfs:label "Competitive landscape" ;
+    rdfs:comment "A structured comparison of the brands competing within one therapeutic area, as stated by one document." .
+Watson:KnowledgeSpace a owl:Class ; rdfs:label "Knowledge space" ;
+    rdfs:comment "A curated, named collection of documents under a topic." .
+Watson:LineageRecord a owl:Class ; rdfs:label "Lineage record" ;
+    rdfs:comment "One enrichment run over one document: who approved it, which model, when, how much was written." .
+Watson:Reviewer a owl:Class ; rdfs:label "Reviewer" ; rdfs:comment "A human who approved a document or owns a knowledge space." .
+Watson:RetrievalEvent a owl:Class ; rdfs:label "Retrieval event" ;
+    rdfs:comment "One chunk returned to one user by the search endpoint. Written to telemetry_store.json, not to the graph: the governance audit (Q10) loads it into a temporary graph and joins it to the chunks." .
+Watson:ProvisionalEntity a owl:Class ; rdfs:label "Provisional entity" ;
+    rdfs:comment "A candidate entity found in a document that is not in the catalog. Waits for a human decision." .
+Watson:CatalogAsset a owl:Class ; rdfs:label "Catalog asset" ;
+    rdfs:comment "A table or column of the data catalog, represented in the graph so grounding can be validated." .
+
+# ------------------------------------------------------------------ object properties (12 required + extras)
+Watson:containsDrug a owl:ObjectProperty ; rdfs:domain Watson:Brand ; rdfs:range Watson:Drug ; owl:inverseOf Watson:isDrugOf ; rdfs:label "contains drug" .
+Watson:isDrugOf a owl:ObjectProperty ; rdfs:domain Watson:Drug ; rdfs:range Watson:Brand ; rdfs:label "is drug of" .
+Watson:targetedIndication a owl:ObjectProperty ; rdfs:domain Watson:Brand ; rdfs:range Watson:Indication ; rdfs:label "targeted indication" .
+Watson:inTherapeuticArea a owl:ObjectProperty ; rdfs:range Watson:TherapeuticArea ; rdfs:label "in therapeutic area" .
+Watson:coversGeography a owl:ObjectProperty ; rdfs:range Watson:Geography ; rdfs:label "covers geography" .
+Watson:mentionsBrand a owl:ObjectProperty ; rdfs:range Watson:Brand ; rdfs:label "mentions brand" .
+Watson:mentionsIndication a owl:ObjectProperty ; rdfs:range Watson:Indication ; rdfs:label "mentions indication" .
+Watson:mentionsDrug a owl:ObjectProperty ; rdfs:range Watson:Drug ; rdfs:label "mentions drug" .
+Watson:mentionsDrugClass a owl:ObjectProperty ; rdfs:range Watson:DrugClass ; rdfs:label "mentions drug class" .
+Watson:mentionsProvisional a owl:ObjectProperty ; rdfs:range Watson:ProvisionalEntity ; rdfs:label "mentions provisional entity" .
+Watson:isChunkOf a owl:ObjectProperty ; rdfs:domain Watson:DocumentChunk ; rdfs:range Watson:MarketResearchDocument ; owl:inverseOf Watson:hasChunk ; rdfs:label "is chunk of" .
+Watson:hasChunk a owl:ObjectProperty ; rdfs:domain Watson:MarketResearchDocument ; rdfs:range Watson:DocumentChunk ; rdfs:label "has chunk" .
+Watson:derivedFrom a owl:ObjectProperty ; rdfs:label "derived from" ;
+    rdfs:comment "Chunk to lineage record, and lineage record to document. A SPARQL path over it traces any chunk back to its source document, the run that made it and the reviewer who approved it." .
+Watson:processedDocument a owl:ObjectProperty ; rdfs:domain Watson:LineageRecord ; rdfs:range Watson:MarketResearchDocument ; rdfs:subPropertyOf Watson:derivedFrom ; rdfs:label "processed document" .
+Watson:reviewedBy a owl:ObjectProperty ; rdfs:domain Watson:LineageRecord ; rdfs:range Watson:Reviewer ; rdfs:label "reviewed by" .
+Watson:containsDocument a owl:ObjectProperty ; rdfs:domain Watson:KnowledgeSpace ; rdfs:range Watson:MarketResearchDocument ; owl:inverseOf Watson:isInSpace ; rdfs:label "contains document" .
+Watson:isInSpace a owl:ObjectProperty ; rdfs:domain Watson:MarketResearchDocument ; rdfs:range Watson:KnowledgeSpace ; rdfs:label "is in space" .
+Watson:hasSentiment a owl:ObjectProperty ; rdfs:domain Watson:Brand ; rdfs:range Watson:SentimentAssertion ; rdfs:label "has sentiment" .
+Watson:forBrand a owl:ObjectProperty ; rdfs:domain Watson:SentimentAssertion ; rdfs:range Watson:Brand ; rdfs:label "for brand" .
+Watson:forIndication a owl:ObjectProperty ; rdfs:domain Watson:SentimentAssertion ; rdfs:range Watson:Indication ; rdfs:label "for indication" .
+Watson:forGeography a owl:ObjectProperty ; rdfs:domain Watson:SentimentAssertion ; rdfs:range Watson:Geography ; rdfs:label "for geography" .
+Watson:competesWithin a owl:ObjectProperty , owl:SymmetricProperty ; rdfs:domain Watson:Brand ; rdfs:range Watson:Brand ; rdfs:label "competes within" ;
+    rdfs:comment "Two brands compared in the same competitive landscape document." .
+Watson:coMentionedWith a owl:ObjectProperty , owl:SymmetricProperty ; rdfs:domain Watson:Brand ; rdfs:range Watson:Brand ; rdfs:label "co-mentioned with" ;
+    rdfs:comment "Two brands named in the same chunk." .
+Watson:hasDrugClass a owl:ObjectProperty ; rdfs:domain Watson:Drug ; rdfs:range Watson:DrugClass ; rdfs:label "has drug class" .
+Watson:partOfRegion a owl:ObjectProperty ; rdfs:domain Watson:Geography ; rdfs:range Watson:Geography ; rdfs:label "part of region" .
+Watson:includesBrand a owl:ObjectProperty ; rdfs:domain Watson:CompetitiveLandscape ; rdfs:range Watson:Brand ; rdfs:label "includes brand" .
+Watson:describedBy a owl:ObjectProperty ; rdfs:domain Watson:CompetitiveLandscape ; rdfs:range Watson:MarketResearchDocument ; rdfs:label "described by" .
+Watson:groundedIn a owl:ObjectProperty ; rdfs:subPropertyOf rdfs:seeAlso ; rdfs:range Watson:CatalogAsset ; rdfs:label "grounded in" ;
+    rdfs:comment "Points from an ontology term or an entity to the catalog table or column it is grounded in. Deliberately not owl:equivalentClass: a catalog table 'brand' holds brand master records, it is not the concept of a brand, and an equivalence would make a reasoner merge them." .
+
+# The one transitive property: a sub-indication belongs to every ancestor indication.
+Watson:subIndicationOf a owl:ObjectProperty , owl:TransitiveProperty ; rdfs:domain Watson:Indication ; rdfs:range Watson:Indication ;
+    rdfs:label "sub-indication of" ;
+    rdfs:comment "Transitive on purpose: if EGFR-mutant NSCLC is a sub-indication of NSCLC, and NSCLC of lung cancer, then EGFR-mutant NSCLC is a sub-indication of lung cancer. Without it, a question about lung cancer misses documents that only name a subtype." .
+
+# ------------------------------------------------------------------ datatype properties (8 required + extras)
+Watson:sensitivityLevel a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "sensitivity level" .
+Watson:allowedTA a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "allowed therapeutic areas" ;
+    rdfs:comment "Absent means all areas." .
+Watson:allowedGeo a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "allowed regions" ;
+    rdfs:comment "Absent means all regions." .
+Watson:quality_score a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "quality score" .
+Watson:freshness_date a owl:DatatypeProperty ; rdfs:range xsd:date ; rdfs:label "freshness date" ;
+    rdfs:comment "The report date the freshness part of the quality score is measured from." .
+Watson:expiry_date a owl:DatatypeProperty ; rdfs:domain Watson:MarketResearchDocument ; rdfs:range xsd:date ; rdfs:label "expiry date" .
+Watson:ingest_timestamp a owl:DatatypeProperty ; rdfs:domain Watson:MarketResearchDocument ; rdfs:range xsd:dateTime ; rdfs:label "ingest timestamp" .
+Watson:lifecycleState a owl:DatatypeProperty ; rdfs:domain Watson:MarketResearchDocument ; rdfs:range xsd:string ; rdfs:label "lifecycle state" ;
+    rdfs:comment "A datatype property, so FILTER (?s = 'ACTIVE') is enough and no extra join is needed. See design_decisions.md for the trade-off against a named state individual." .
+Watson:study_type a owl:DatatypeProperty ; rdfs:domain Watson:MarketResearchDocument ; rdfs:range xsd:string ; rdfs:label "study type" .
+Watson:documentTitle a owl:DatatypeProperty ; rdfs:domain Watson:MarketResearchDocument ; rdfs:range xsd:string ; rdfs:label "title" .
+Watson:taxonomyVersion a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "taxonomy version" ;
+    rdfs:comment "Version of the taxonomy a classified triple was checked against." .
+Watson:catalogVersion a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "catalog version" .
+Watson:sentimentScore a owl:DatatypeProperty ; rdfs:domain Watson:SentimentAssertion ; rdfs:range xsd:double ; rdfs:label "sentiment score" .
+Watson:assertionDate a owl:DatatypeProperty ; rdfs:domain Watson:SentimentAssertion ; rdfs:range xsd:date ; rdfs:label "assertion date" .
+# No chunk text property on purpose: the text stays in Layer 1's staging store and is read only after the ABAC filter.
+Watson:chunk_index a owl:DatatypeProperty ; rdfs:domain Watson:DocumentChunk ; rdfs:range xsd:integer ; rdfs:label "chunk index" .
+Watson:faissId a owl:DatatypeProperty ; rdfs:domain Watson:DocumentChunk ; rdfs:range xsd:integer ; rdfs:label "vector index id" .
+Watson:chunksProduced a owl:DatatypeProperty ; rdfs:domain Watson:LineageRecord ; rdfs:range xsd:integer ; rdfs:label "chunks produced" .
+Watson:triplesWritten a owl:DatatypeProperty ; rdfs:domain Watson:LineageRecord ; rdfs:range xsd:integer ; rdfs:label "triples written" .
+Watson:processingTimestamp a owl:DatatypeProperty ; rdfs:domain Watson:LineageRecord ; rdfs:range xsd:dateTime ; rdfs:label "processing timestamp" .
+Watson:enrichmentModel a owl:DatatypeProperty ; rdfs:domain Watson:LineageRecord ; rdfs:range xsd:string ; rdfs:label "enrichment model" .
+Watson:retrievedChunk a owl:ObjectProperty ; rdfs:domain Watson:RetrievalEvent ; rdfs:range Watson:DocumentChunk ; rdfs:label "retrieved chunk" .
+Watson:requestedBy a owl:DatatypeProperty ; rdfs:domain Watson:RetrievalEvent ; rdfs:range xsd:string ; rdfs:label "requested by (user id)" .
+Watson:userRole a owl:DatatypeProperty ; rdfs:domain Watson:RetrievalEvent ; rdfs:range xsd:string ; rdfs:label "role of the requesting user" .
+Watson:eventTime a owl:DatatypeProperty ; rdfs:domain Watson:RetrievalEvent ; rdfs:range xsd:dateTime ; rdfs:label "event time" .
+Watson:spaceName a owl:DatatypeProperty ; rdfs:domain Watson:KnowledgeSpace ; rdfs:range xsd:string ; rdfs:label "space name" .
+Watson:spaceOwner a owl:ObjectProperty ; rdfs:domain Watson:KnowledgeSpace ; rdfs:range Watson:Reviewer ; rdfs:label "space owner" .
+Watson:spaceTherapeuticArea a owl:ObjectProperty ; rdfs:domain Watson:KnowledgeSpace ; rdfs:range Watson:TherapeuticArea ; rdfs:label "space therapeutic area" .
+Watson:created a owl:DatatypeProperty ; rdfs:domain Watson:KnowledgeSpace ; rdfs:range xsd:dateTime ; rdfs:label "created" .
+Watson:description a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "description" .
+Watson:mechanismOfAction a owl:DatatypeProperty ; rdfs:domain Watson:Drug ; rdfs:range xsd:string ; rdfs:label "mechanism of action" .
+Watson:atcCode a owl:DatatypeProperty ; rdfs:domain Watson:Drug ; rdfs:range xsd:string ; rdfs:label "ATC code" .
+Watson:molecularWeight a owl:DatatypeProperty ; rdfs:domain Watson:Drug ; rdfs:range xsd:double ; rdfs:label "molecular weight" ;
+    rdfs:comment "Defined for completeness. Our fictional drugs have no molecular weight, so none is written." .
+Watson:company a owl:DatatypeProperty ; rdfs:domain Watson:Brand ; rdfs:range xsd:string ; rdfs:label "global brand owner" .
+Watson:geographyKind a owl:DatatypeProperty ; rdfs:domain Watson:Geography ; rdfs:range xsd:string ; rdfs:label "country or region" .
+Watson:payerType a owl:DatatypeProperty ; rdfs:domain Watson:Geography ; rdfs:range xsd:string ; rdfs:label "payer system type" .
+Watson:isoCode a owl:DatatypeProperty ; rdfs:domain Watson:Geography ; rdfs:range xsd:string ; rdfs:label "ISO alpha-2 code" .
+Watson:isGrouping a owl:DatatypeProperty ; rdfs:domain Watson:Indication ; rdfs:range xsd:boolean ; rdfs:label "is grouping node" ;
+    rdfs:comment "True for an indication added only to group subtypes (lung cancer, breast cancer, heart failure)." .
+Watson:confidence a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "extraction confidence" .
+Watson:fqn a owl:DatatypeProperty ; rdfs:domain Watson:CatalogAsset ; rdfs:range xsd:string ; rdfs:label "catalog full name" .
+Watson:assetOrigin a owl:DatatypeProperty ; rdfs:domain Watson:CatalogAsset ; rdfs:range xsd:string ; rdfs:label "upstream or extension" .
+Watson:groundingStatus a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "grounding status" ;
+    rdfs:comment "grounded, partial or extension. Written onto each ontology term by populate_graph.py from the catalog's grounding map." .
+Watson:groundingNote a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "grounding note" .
+Watson:entityType a owl:DatatypeProperty ; rdfs:domain Watson:ProvisionalEntity ; rdfs:range xsd:string ; rdfs:label "entity type" .
+Watson:provisionalStatus a owl:DatatypeProperty ; rdfs:domain Watson:ProvisionalEntity ; rdfs:range xsd:string ; rdfs:label "provisional status" .
+
+# ------------------------------------------------------------------ external alignments
+# Watson:Drug owl:equivalentClass obo:CHEBI_23888 is declared above (ChEBI "drug", looked up, not typed from memory).
+# The DOID and MeSH matches are per individual, not per class: each Watson:Indication gets skos:exactMatch to its
+# own DOID, and each Watson:TherapeuticArea gets skos:closeMatch to its MeSH category. populate_graph.py writes them
+# from layer2/catalog/alignments.json (exact label or synonym matches only). A class-level DOID/MeSH term would be
+# one more ID that nobody looked up, and it would be wrong: "Indication" as a whole has no single DOID.
+# exactMatch for DOID: the label or a synonym matched exactly, so the two terms mean the same disease.
+# closeMatch for MeSH: a therapeutic area is a business grouping (Oncology) that overlaps a MeSH category (Neoplasms)
+# but is not the same set of things, so the claim is deliberately weaker.

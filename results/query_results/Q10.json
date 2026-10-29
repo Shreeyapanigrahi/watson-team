@@ -1,0 +1,96 @@
+{
+  "id": "Q10",
+  "title": "ABAC governance audit",
+  "question": "For every role, how many chunks of each sensitivity level did search return, and did any role receive a level above its ceiling?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?role ?sensitivity (COUNT(?event) AS ?retrievals)\n       (IF(?role = \"VIEWER\" && ?sensitivity IN (\"RESTRICTED\", \"CONFIDENTIAL\"), \"VIOLATION\",\n        IF(?role = \"ANALYST\" && ?sensitivity = \"CONFIDENTIAL\", \"VIOLATION\", \"ok\")) AS ?verdict)\nWHERE {\n  ?event a Watson:RetrievalEvent ;\n         Watson:userRole ?role ;\n         Watson:retrievedChunk ?chunk .\n  ?chunk Watson:sensitivityLevel ?sensitivity .\n}\nGROUP BY ?role ?sensitivity\nORDER BY ?role ?sensitivity",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:56+0530",
+  "triples_in_graph": 5805,
+  "telemetry_events": 136,
+  "columns": [
+    "role",
+    "sensitivity",
+    "retrievals",
+    "verdict"
+  ],
+  "rows": [
+    {
+      "role": "ADMIN",
+      "sensitivity": "CONFIDENTIAL",
+      "retrievals": 2,
+      "verdict": "ok"
+    },
+    {
+      "role": "ADMIN",
+      "sensitivity": "INTERNAL",
+      "retrievals": 25,
+      "verdict": "ok"
+    },
+    {
+      "role": "ADMIN",
+      "sensitivity": "PUBLIC",
+      "retrievals": 4,
+      "verdict": "ok"
+    },
+    {
+      "role": "ADMIN",
+      "sensitivity": "RESTRICTED",
+      "retrievals": 27,
+      "verdict": "ok"
+    },
+    {
+      "role": "ANALYST",
+      "sensitivity": "INTERNAL",
+      "retrievals": 7,
+      "verdict": "ok"
+    },
+    {
+      "role": "ANALYST",
+      "sensitivity": "PUBLIC",
+      "retrievals": 1,
+      "verdict": "ok"
+    },
+    {
+      "role": "ANALYST",
+      "sensitivity": "RESTRICTED",
+      "retrievals": 10,
+      "verdict": "ok"
+    },
+    {
+      "role": "SPOC",
+      "sensitivity": "CONFIDENTIAL",
+      "retrievals": 1,
+      "verdict": "ok"
+    },
+    {
+      "role": "SPOC",
+      "sensitivity": "INTERNAL",
+      "retrievals": 7,
+      "verdict": "ok"
+    },
+    {
+      "role": "SPOC",
+      "sensitivity": "RESTRICTED",
+      "retrievals": 9,
+      "verdict": "ok"
+    },
+    {
+      "role": "VIEWER",
+      "sensitivity": "INTERNAL",
+      "retrievals": 30,
+      "verdict": "ok"
+    },
+    {
+      "role": "VIEWER",
+      "sensitivity": "PUBLIC",
+      "retrievals": 6,
+      "verdict": "ok"
+    }
+  ],
+  "count": 12,
+  "seconds": 0.214
+}

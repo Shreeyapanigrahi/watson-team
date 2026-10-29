@@ -297,6 +297,29 @@ def chunking_comparison(user=Depends(current_user)):
     return json.loads(p.read_text(encoding="utf-8"))
 
 
+# ---------------------------------------------------------------- Layer 2 (semantic foundation)
+# Layer 2 sits on top of Layer 1: its router reuses current_user (same sign-in, same ABAC engine), and it listens to
+# lifecycle transitions through a registered hook, so Layer 1's own modules never import Layer 2.
+from layer2 import enrichment_pipeline as _enrichment            # noqa: E402
+from layer2.api.router import build_router                       # noqa: E402
+from layer2.embedder import EmbeddingUnavailable                  # noqa: E402
+
+_register_handler(EmbeddingUnavailable, 503)
+app.include_router(build_router(current_user))
+
+# ---------------------------------------------------------------- Layer 3 (questions and cited answers)
+from layer3.api.router import build_router as build_l3_router     # noqa: E402
+
+app.include_router(build_l3_router(current_user))
+
+
+@app.on_event("startup")
+def _install_layer2_hooks():
+    """Only when the server actually starts. Importing this module (as Layer 1's tests do) must not make approvals
+    write into Layer 2's stores."""
+    _enrichment.install_hooks()
+
+
 # Serve the built React app when present (single-command run). During development
 # the Vite dev server proxies /api to this process instead.
 _dist = config.ROOT.parent / "frontend" / "dist"

@@ -1,0 +1,62 @@
+{
+  "id": "Q1",
+  "title": "Shared target discovery",
+  "question": "Which indications (counting their sub-indications) are targeted by two or more different drugs, and by which brands?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?indication (COUNT(DISTINCT ?drug) AS ?drugs) (GROUP_CONCAT(DISTINCT ?brandLabel; separator=\", \") AS ?brands)\nWHERE {\n  ?brand a Watson:Brand ;\n         rdfs:label ?brandLabel ;\n         Watson:containsDrug ?drug ;\n         Watson:targetedIndication ?narrow .\n  ?narrow Watson:subIndicationOf* ?ind .        # transitive: EGFR-mutant NSCLC counts for NSCLC and for lung cancer\n  ?ind rdfs:label ?indication .\n}\nGROUP BY ?indication\nHAVING (COUNT(DISTINCT ?drug) >= 2)\nORDER BY DESC(?drugs) ?indication",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:51+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "indication",
+    "drugs",
+    "brands"
+  ],
+  "rows": [
+    {
+      "indication": "lung cancer",
+      "drugs": 4,
+      "brands": "Tagrisa, Lumakro, Keytrava, Opdivra"
+    },
+    {
+      "indication": "non-small cell lung cancer",
+      "drugs": 4,
+      "brands": "Tagrisa, Lumakro, Keytrava, Opdivra"
+    },
+    {
+      "indication": "heart failure",
+      "drugs": 3,
+      "brands": "Verquvia, Jardiva, Entrestra"
+    },
+    {
+      "indication": "heart failure with reduced ejection fraction",
+      "drugs": 3,
+      "brands": "Verquvia, Jardiva, Entrestra"
+    },
+    {
+      "indication": "plaque psoriasis",
+      "drugs": 3,
+      "brands": "Adalibra, Skyrixa, Cosentex, Humivex"
+    },
+    {
+      "indication": "psoriatic arthritis",
+      "drugs": 3,
+      "brands": "Skyrixa, Cosentex, Humivex"
+    },
+    {
+      "indication": "breast cancer",
+      "drugs": 2,
+      "brands": "Trodelvia, Enhertra"
+    },
+    {
+      "indication": "melanoma",
+      "drugs": 2,
+      "brands": "Keytrava, Opdivra"
+    }
+  ],
+  "count": 8,
+  "seconds": 0.033
+}

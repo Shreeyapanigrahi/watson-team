@@ -1,0 +1,42 @@
+{
+  "id": "Q5",
+  "title": "Coverage gap",
+  "question": "Which indications have at least one brand but are covered by fewer than two active documents?",
+  "sparql": "PREFIX Watson: <http://watson.local/pharma#>\nPREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?indication (COALESCE(?n, 0) AS ?documents) (MIN(?brandLabel) AS ?exampleBrand)\nWHERE {\n  ?brand Watson:targetedIndication ?i ;\n         rdfs:label ?brandLabel .\n  ?i rdfs:label ?indication .\n  FILTER NOT EXISTS {\n    ?d1 Watson:mentionsIndication ?i ; Watson:lifecycleState \"ACTIVE\" .\n    ?d2 Watson:mentionsIndication ?i ; Watson:lifecycleState \"ACTIVE\" .\n    FILTER (?d1 != ?d2)\n  }\n  OPTIONAL { SELECT ?i (COUNT(DISTINCT ?d) AS ?n)\n             WHERE { ?d Watson:mentionsIndication ?i ; Watson:lifecycleState \"ACTIVE\" }\n             GROUP BY ?i }\n}\nGROUP BY ?indication ?n\nORDER BY ?documents ?indication",
+  "params": {
+    "today": "2026-10-28",
+    "in90": "2027-01-26"
+  },
+  "reasoning": null,
+  "ran_at": "2026-10-28T20:02:52+0530",
+  "triples_in_graph": 5805,
+  "columns": [
+    "indication",
+    "documents",
+    "exampleBrand"
+  ],
+  "rows": [
+    {
+      "indication": "renal cell carcinoma",
+      "documents": 0,
+      "exampleBrand": "Keytrava"
+    },
+    {
+      "indication": "Alzheimer's disease",
+      "documents": 1,
+      "exampleBrand": "Leqembra"
+    },
+    {
+      "indication": "heart failure with preserved ejection fraction",
+      "documents": 1,
+      "exampleBrand": "Jardiva"
+    },
+    {
+      "indication": "triple-negative breast cancer",
+      "documents": 1,
+      "exampleBrand": "Trodelvia"
+    }
+  ],
+  "count": 4,
+  "seconds": 0.734
+}
