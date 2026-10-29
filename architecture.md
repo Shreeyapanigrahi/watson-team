@@ -38,7 +38,7 @@ The audit log records every step.
 
 React 18 and Vite, plain CSS, no UI library. `src/api.js` is the only place that calls the backend. Routes are guarded by role.
 Screens: Login, Dashboard, Upload, Documents, Document detail (with the review form), Review queue, Expiry, Audit,
-Document catalog, Design evidence. Layer 2 adds Knowledge space, Entities (and detail), Data catalog, Ontology, Graph health, SPARQL queries, and a Knowledge tab on Document detail.
+Document catalog, Design evidence. Layer 2 adds Knowledge space (with document, entity and relationship filters and a per-document facts card; the filters are applied in `layer2/graph_view.py` on the user's readable documents, so the screen only offers and shows what the user may read), Entities (and detail), Data catalog, Ontology, Graph health, SPARQL queries, and a Knowledge tab on Document detail.
 The graph view uses Cytoscape (the only added dependency).
 
 ## Layer 2 in one paragraph

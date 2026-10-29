@@ -5,6 +5,7 @@ import { Badge, Empty, ErrorBox, Loading, fmtDateTime, useAsync } from '../ui'
 const TONE = {
   INGEST: 'info', PARSE_WARNING: 'warn', PII_FLAG: 'bad', DEDUP_HIT: 'warn', STATE_TRANSITION: 'neutral',
   LIFECYCLE_VIOLATION: 'bad', EXPIRY_TRIGGERED: 'warn', ABAC_DENIED: 'bad',
+  LOGIN: 'info', LOGIN_FAILED: 'bad', LOGOUT: 'neutral', PASSWORD_CHANGED: 'warn', HISTORY_DELETED: 'warn',
 }
 
 export default function Audit() {

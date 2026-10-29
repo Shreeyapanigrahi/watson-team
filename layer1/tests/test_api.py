@@ -2,16 +2,23 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from layer1 import auth
 from layer1.api.main import app
+
+TEST_PASSWORD = "correct horse battery"
 
 
 @pytest.fixture()
 def client(env):
+    auth.reset_state()
     return TestClient(app)
 
 
 def login(client, user_id):
-    r = client.post("/api/login", json={"user_id": user_id})
+    """Sign in through the real login route (the test store gets a password for this account first)."""
+    name = auth.username_for(user_id)
+    auth.set_password(name, TEST_PASSWORD)
+    r = client.post("/api/login", json={"username": name, "password": TEST_PASSWORD})
     assert r.status_code == 200
     return {"Authorization": "Bearer " + r.json()["token"]}
 
@@ -21,9 +28,8 @@ def upload(client, headers, path):
         return client.post("/api/documents", headers=headers, files={"file": (path.name, f)})
 
 
-def test_login_lists_four_roles(client):
-    roles = {u["role"] for u in client.get("/api/users").json()["users"]}
-    assert roles == {"VIEWER", "ANALYST", "SPOC", "ADMIN"}
+def test_the_user_list_is_no_longer_public(client):
+    assert client.get("/api/users").status_code == 404
 
 
 def test_endpoints_require_a_token(client):

@@ -31,6 +31,7 @@ If every attempt fails we say so and carry on with passage retrieval. We never s
 import json
 import re
 import time
+from collections import Counter
 
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
@@ -168,10 +169,12 @@ def _vars_for(cls_name: str, entities: list) -> list:
     return [v for v, c in TYPED_VARS.items() if c == cls_name] + [f"Watson:{e['entity_id']}" for e in entities if KIND_CLASS.get(e["kind"]) == cls_name]
 
 
-def _edge_variants(entities: list, shapes: dict, anchored: list | None = None, reach: dict | None = None) -> list:
+def _edge_variants(entities: list, shapes: dict, anchored: list | None = None, reach: dict | None = None, kinds: set | None = None,
+                   drop: set | None = None, skip: set | None = None) -> list:
     """One schema per allowed edge shape. With `anchored` (entity IRIs), a slot that may hold an entity is fixed to one of them.
     With `reach` ({entity IRI: keys of entity_edges}), an entity is only offered in an edge that has triples for it in the user's
-    graph, so the first edge cannot be one that is guaranteed to return nothing (for example co-mentions of a brand that has none)."""
+    graph, so the first edge cannot be one that is guaranteed to return nothing (for example co-mentions of a brand that has none).
+    With `drop` (class names), no variable of those kinds is offered at all; with `skip` (shape keys), those shapes are not offered."""
     out = []
 
     def reaches(iri, prop, direction, kind):
@@ -181,19 +184,25 @@ def _edge_variants(entities: list, shapes: dict, anchored: list | None = None, r
         return {"enum": options}
 
     for (prop, sc, oc), _ in sorted(shapes.items()):
+        if (drop and (sc in drop or oc in drop)) or (skip and (prop, sc, oc) in skip):
+            continue
         s_enum, o_enum = _vars_for(sc, entities), (VALUE_VARS if oc == "value" else _vars_for(oc, entities))
         if not (s_enum and o_enum):
             continue
-        forms = [(s_enum, o_enum)]
+        forms = [(s_enum, o_enum, None)]                  # third item: the kind at the end that is NOT the entity (only known when anchored)
         if anchored is not None:
             s_a = [x for x in s_enum if x in anchored and reaches(x, prop, "out", oc)]
             o_a = [x for x in o_enum if x in anchored and reaches(x, prop, "in", sc)]
             s_v = [x for x in s_enum if x not in anchored]
             o_v = [x for x in o_enum if x not in anchored]
-            forms = ([(s_a, o_v)] if s_a and o_v else []) + ([(s_v, o_a)] if s_v and o_a else [])
-        for se, oe in forms:
+            forms = ([(s_a, o_v, oc)] if s_a and o_v else []) + ([(s_v, o_a, sc)] if s_v and o_a else [])
+        for se, oe, other in forms:
+            if anchored is not None and kinds is not None and other not in kinds:      # the edge must lead to the kind of thing asked for
+                continue
             out.append({"type": "object", "required": ["s", "p", "o"], "properties": {"s": slot(se), "p": {"const": f"Watson:{prop}"}, "o": slot(oe)}})
-    for cls_name in sorted(CANON - {"MarketResearchDocument", "DocumentChunk", "SentimentAssertion"}):       # names of reference things
+    if kinds is not None and anchored is not None:        # a name (rdfs:label) is not an edge to the kind of thing asked for
+        return out
+    for cls_name in sorted(CANON - {"MarketResearchDocument", "DocumentChunk", "SentimentAssertion"} - (drop or set())):       # names of reference things
         s_enum = _vars_for(cls_name, entities)
         if anchored is not None:
             s_enum = [x for x in s_enum if x in anchored]
@@ -203,16 +212,233 @@ def _edge_variants(entities: list, shapes: dict, anchored: list | None = None, r
     return out
 
 
-def plan_schema(entities: list, shapes: dict, graph: Graph | None = None) -> dict:
+def named_relations(question: str, shapes: dict) -> set:
+    """Ontology properties the question itself names, as the property name ('containsDrug') or its words in order ('contains drug',
+    'co-mentioned with', 'company'), with at most two other words between them ('contains which drug'). Whole words only."""
+    q = " " + re.sub(r"[^a-z0-9]+", " ", question.lower()).strip() + " "
+    found = set()
+    for prop in {p for (p, _, _) in shapes}:
+        words = re.sub(r"(?<!^)(?=[A-Z])", " ", prop).replace("_", " ").lower().split()
+        phrase = r"(?:\s+\w+){0,2}\s+".join(re.escape(w) for w in words)
+        if re.search(rf"(?<!\w){phrase}(?!\w)", q) or f" {prop.lower()} " in q:
+            found.add(prop)
+    return found
+
+
+KIND_WORDS = {"Brand": ("brand", "brands"), "Drug": ("drug", "drugs"), "DrugClass": ("drug class", "drug classes"),
+              "Indication": ("indication", "indications"), "TherapeuticArea": ("therapeutic area", "therapeutic areas"),
+              "Geography": ("country", "countries", "geography", "geographies", "region", "regions"),
+              "MarketResearchDocument": ("document", "documents", "report", "reports"), "KnowledgeSpace": ("knowledge space", "knowledge spaces")}
+
+
+def answer_kinds(question: str, entities: list) -> set:
+    """The kinds of thing the question asks for ('which drug' -> Drug). A kind word right next to an entity's own name of that
+    kind ('the Dupixa brand') describes the entity, not the answer, so it is not counted."""
+    q = " " + re.sub(r"[^a-z0-9]+", " ", question.lower()).strip() + " "
+    for e in entities:
+        name = re.sub(r"[^a-z0-9]+", " ", (e.get("text") or "").lower()).strip()
+        for w in KIND_WORDS.get(e.get("kind"), ()):
+            if name:
+                q = q.replace(f" {name} {w} ", f" {name} ").replace(f" {w} {name} ", f" {name} ")
+    kinds = set()
+    for w, kind in sorted(((w, k) for k, ws in KIND_WORDS.items() for w in ws), key=lambda x: -len(x[0])):     # 'drug class' before 'drug'
+        if f" {w} " in q:
+            kinds.add(kind)
+            q = q.replace(f" {w} ", " ")
+    return kinds
+
+
+COUNT_CUE = re.compile(r"\b(?:how\s+many|total\s+number\s+of|number\s+of|count\s+of)\b\s*(.*)")
+FILLER_NUMBER_OF = re.compile(r"^(?:(?:the\s+)?(?:total\s+)?(?:number|count)\s+of\s+)+")   # a second cue right after 'how many'
+NOT_ONE_NUMBER = re.compile(r"\b(?:per|each|every|by|broken\s+down|breakdown|grouped|group|split|distribution|most|least|highest|lowest|largest|"
+                            r"smallest|top|rank|ranked|more|fewer|than|compare|trend)\b")
+NOUN_PHRASE_END = {"are", "is", "do", "does", "did", "were", "was", "have", "has", "had", "in", "of", "for", "on", "at", "with", "from", "exist",
+                   "exists", "there", "mentioned", "covered", "appear", "appears", "can", "could", "will", "would", "that", "which", "who", "within",
+                   "under", "inside", "across"}
+NOUN_PHRASE_SKIP = {"our", "the", "my", "your", "different", "distinct", "unique", "total"}      # words before the noun that say nothing about its kind
+COUNT_NOT_OFFERED = {"SentimentAssertion", "KnowledgeSpace"}  # a count of things is not narrowed by opinions, nor by a space (no entity names one, so it would only add a join)
+COUNT_SCOPE = ("MarketResearchDocument", "DocumentChunk")        # what the user's slice is made of: counting over these follows the user's access
+REFERENCE_KINDS = set(KIND_CLASS.values())                       # Brand, Drug, ... : things the documents mention, as opposed to documents and passages themselves
+
+
+def count_intent(question: str) -> dict | None:
+    """A question that asks for ONE number ('how many drugs ...', 'number of countries ...'): {'phrase': the thing counted, in the
+    question's words}. Wording that asks for a breakdown or a ranking ('per', 'each', 'by', 'most', ...) is not one number, and
+    gets the ordinary plan. Only the shape of the sentence is read here; which kind of thing is counted comes from the ontology's
+    kind words and the glossary (counted_class), so nothing is listed per domain term."""
+    q = " " + re.sub(r"[^a-z0-9']+", " ", question.lower()).strip() + " "
+    m = COUNT_CUE.search(q.strip())
+    grouping_words = re.sub(r"\b(\w+(?:ed|en|wn|ten))\s+by\b|\bby\s+(?:the|our|a|an)\b", r"\1", q)           # 'covered by the space', 'targeted by X': by an agent, not by a group
+    if not m or NOT_ONE_NUMBER.search(grouping_words):
+        return None
+    after, words, end = FILLER_NUMBER_OF.sub("", m.group(1)).split(), [], 0         # 'how many number of documents': the thing counted is 'documents'
+    for i, w in enumerate(after):
+        if w in NOUN_PHRASE_END or len(words) >= 3:
+            break
+        if w not in NOUN_PHRASE_SKIP:
+            words.append(w)
+        end = i + 1
+    rest = q.strip()[:m.start()].split() + after[end:]               # the question without 'how many' and the thing counted
+    return {"phrase": " ".join(words), "rest": " ".join(rest)} if words else None
+
+
+def counted_class(phrase: str, entities: list) -> str | None:
+    """The kind of thing in the counted phrase: the ontology's own kind words first ('drugs', 'countries'), else the glossary by
+    meaning ('geographical areas' -> Geography). None when it is not clear: the grammar then leaves the counted variable open."""
+    from . import semantic                                       # imported here: semantic has no need of this module
+    kinds = answer_kinds(" " + phrase + " ", entities)
+    if len(kinds) == 1:
+        return next(iter(kinds))
+    return None if kinds else semantic.kind_of(phrase)
+
+
+STRUCTURAL_KINDS = {"MarketResearchDocument", "DocumentChunk", "KnowledgeSpace", "SentimentAssertion"}      # what the graph is built of, not what it is about
+
+
+def _count_of(graph: Graph, pattern: str) -> int:
+    rows = list(graph.query(with_prefixes(f"SELECT (COUNT(DISTINCT ?x) AS ?c) WHERE {{ {pattern} }}")))
+    return int(rows[0][0]) if rows else 0
+
+
+def _variant(prop: str, s_enum: list, o_enum: list) -> dict:
+    return {"type": "object", "required": ["s", "p", "o"], "properties": {"s": {"enum": s_enum}, "p": {"const": prop}, "o": {"enum": o_enum}}}
+
+
+BRIDGE = ("isChunkOf", "DocumentChunk", "MarketResearchDocument")      # a passage belongs to its document
+
+
+def _minus_entities(text: str, entities: list) -> str:
+    """The text in plain lower-case words without the entities' own names. A name carries words that mean something else on their own
+    ('HER2 antibody-drug conjugate': a number and the word 'drug'), and they must not be read as part of what the question asks."""
+    out = " " + re.sub(r"[^a-z0-9]+", " ", text.lower()).strip() + " "
+    for e in entities:
+        name = re.sub(r"[^a-z0-9]+", " ", (e.get("text") or "").lower()).strip()
+        if name:
+            out = out.replace(f" {name} ", " ")
+    return out.strip()
+
+
+def entity_document_route(intent: dict, entities: list, shapes: dict, graph: Graph | None) -> tuple:
+    """(first edge variants, edges that must follow) for 'how many documents ... <one named entity>'. A document is associated with an
+    entity if it links to it itself, or through one of its passages (passage -[prop]-> entity, passage -isChunkOf-> document). A plan is
+    a conjunction of edges, so it can follow one level only; which level is complete is read from the user's graph, per entity: the
+    level whose distinct documents equal those of all the entity's links together. Measured on this data one level always contains the
+    other, but not always the same one: EU has 25 documents at document level and 15 through passages, Germany 0 and 10, brands equal.
+    An entity nothing readable links to is routed to the document level, so the count is an honest 0 rather than a failed query.
+    ([], []) when this does not apply, or when neither level contains the other (the ordinary plan is left to decide)."""
+    named = [e for e in entities if e.get("entity_id")]
+    if graph is None or len(named) != 1 or named[0].get("kind") not in KIND_CLASS:
+        return [], []
+    e, kind = named[0], KIND_CLASS[named[0]["kind"]]
+    others = answer_kinds(" " + _minus_entities(intent["rest"], entities) + " ", entities) - {"KnowledgeSpace", *COUNT_SCOPE, kind}
+    if others:
+        return [], []
+    links, node = entity_edges(graph, e["entity_id"]), W[e["entity_id"]]
+    props = {lvl: sorted({p for (p, d, k) in links if d == "in" and k == scope}) for lvl, scope in (("doc", "MarketResearchDocument"), ("chunk", "DocumentChunk"))}
+    if not props["doc"] and not props["chunk"]:                  # nothing readable links to it: what the graph's shapes allow for its kind
+        props = {lvl: sorted({p for (p, sc, oc) in shapes if sc == scope and oc == kind}) for lvl, scope in (("doc", "MarketResearchDocument"), ("chunk", "DocumentChunk"))}
+    if BRIDGE not in shapes:
+        props["chunk"] = []
+    pattern = {("doc", p): f"?x a Watson:MarketResearchDocument . ?x Watson:{p} <{node}>" for p in props["doc"]}
+    pattern |= {("chunk", p): f"?c Watson:{BRIDGE[0]} ?x . ?c Watson:{p} <{node}>" for p in props["chunk"]}
+    if not pattern:
+        return [], []
+    union = _count_of(graph, " UNION ".join("{ " + pat + " }" for pat in pattern.values()))
+    complete = [key for key, pat in pattern.items() if _count_of(graph, pat) == union]
+    if not complete:
+        return [], []
+    level = "doc" if any(lvl == "doc" for lvl, _ in complete) else "chunk"                # on a tie the plain document edge needs no bridge
+    iri, subject = [f"Watson:{e['entity_id']}"], _vars_for("MarketResearchDocument" if level == "doc" else "DocumentChunk", [])
+    first = [_variant(f"Watson:{p}", subject, iri) for lvl, p in complete if lvl == level]
+    bridge = [_variant(f"Watson:{BRIDGE[0]}", subject, _vars_for("MarketResearchDocument", []))] if level == "chunk" else []
+    return first, bridge
+
+
+def count_setup(question: str, entities: list, shapes: dict, graph: Graph | None = None) -> dict | None:
+    """What a how-many plan must look like: one column, a count_distinct of the counted kind, no opinion or space variables, and, when
+    no entity is named, the finest-grain relation only. Documents carry some links that their passages carry in more detail
+    (a document covers 3 regions, its passages cover 9 places); a passage of a readable document is a mention by that document, so
+    the passage-level relation is the complete count, and offering both lets a small model require both (the intersection).
+    Measured on this data: the passage-level SET OF DISTINCT ENTITIES always contains the document-level set. For the documents linked to
+    ONE entity that does not hold either way (see entity_document_route). None for any other question."""
+    intent = count_intent(question)
+    if not intent:
+        return None
+    cls = counted_class(intent["phrase"], entities)
+    if not cls:                                                  # 'how many classes does the ontology have': not a count over the graph's things
+        return None
+    named = any(e.get("entity_id") for e in entities)
+    fine = cls in REFERENCE_KINDS and not named
+    skip = {k for k in shapes if fine and k[1] == "MarketResearchDocument" and (k[0], "DocumentChunk", k[2]) in shapes}
+    of = [v for v, c in TYPED_VARS.items() if c == cls]
+    # A bare count of one kind (no entity, number, other relation or other kind in the question) is one edge. For a kind the documents
+    # mention it is the edge from the documents' side: a 3B model cannot find it among 100 edges (it padded plans with unrelated
+    # ones), but the user's graph lists exactly which edges leave the documents or passages for that kind, so only those are offered.
+    # For what the graph is built of (documents, spaces, ...) it is an edge that EVERY one of them has, found by counting in the user's
+    # graph, so the join cannot silently leave some out.
+    only, then = [], []
+    variant = _variant
+    if (fine or cls in STRUCTURAL_KINDS and not named) and not re.search(r"\d", question):
+        if fine:
+            for (p, sc, oc) in sorted(shapes):
+                if (p, sc, oc) in skip or {sc, oc} - set(COUNT_SCOPE) != {cls} or (sc == oc):
+                    continue
+                s_enum, o_enum = _vars_for(sc, entities), _vars_for(oc, entities)
+                if s_enum and o_enum:
+                    only.append(variant(f"Watson:{p}", s_enum, o_enum))
+        elif graph is not None:
+            total = _count_of(graph, f"?x a Watson:{cls}")
+            for p, o_enum in sorted([(p, VALUE_VARS) for (p, sc, oc) in shapes if sc == cls and oc == "value"] + [("rdfs:label", ["?name"])]):
+                pred = p if p == "rdfs:label" else f"Watson:{p}"
+                if total and _count_of(graph, f"?x a Watson:{cls} . ?x {pred} ?v") == total:
+                    only.append(variant(pred, of, o_enum))
+        if only:        # judged on the rest of the question: the counted phrase itself ('drug classes') would match a kind and a relation
+            from . import semantic
+            rest = intent["rest"]
+            others = answer_kinds(" " + rest + " ", entities) - {"KnowledgeSpace", *COUNT_SCOPE}      # 'our knowledge space', 'in documents': scope words
+            scope_words = {w for k in ("KnowledgeSpace", "MarketResearchDocument") for w in KIND_WORDS[k]} | {
+                f for k in ("KnowledgeSpace", "MarketResearchDocument", "DocumentChunk") for ph in semantic.glossary()["kinds"][k]["phrases"]
+                for f in semantic._forms(semantic._plain(ph))}
+            rest = " " + rest + " "
+            for w in sorted(scope_words, key=len, reverse=True):          # the scope words are not a relation ('knowledge space' scored 0.857 against spaceName)
+                rest = rest.replace(f" {w} ", " ")
+            rest = rest.strip()
+            related = named_relations(rest, shapes) | set(semantic.match(rest, entities)["relations_selected"] if rest else [])
+            offered = {v["properties"]["p"]["const"].split(":", 1)[-1] for v in only}                   # 'covered' is fine: coversGeography is the edge the count uses
+            if others or related - offered:
+                only = []
+    route = set()                    # the relations an entity route counts through: a gap in one of them is a 0, not "no such relation"
+    if cls == "MarketResearchDocument" and not only and not re.search(r"\d", _minus_entities(question, entities)):
+        only, then = entity_document_route(intent, entities, shapes, graph)
+        route = {v["properties"]["p"]["const"].split(":", 1)[-1] for v in [*only, *then]}
+    mentioned = answer_kinds(question, entities) | {KIND_CLASS[e["kind"]] for e in entities if e.get("kind") in KIND_CLASS} | {cls}
+    return {"phrase": intent["phrase"], "kind": cls, "of": of, "drop": COUNT_NOT_OFFERED - {cls}, "skip": skip, "only": only,
+            "then": then, "route": route, "mentioned": mentioned}
+
+
+def plan_schema(entities: list, shapes: dict, graph: Graph | None = None, relations: set | None = None, kinds: set | None = None,
+                count: dict | None = None) -> dict:
     """The JSON schema the reply is decoded under. Each edge is one of the shapes that exist in the user's graph, so a property
     can only be used with subjects and objects of the right kind. If the question names an entity, the FIRST edge must use it,
-    and (when the graph is given) only through a relation that has triples for that entity in the user's graph."""
+    and (when the graph is given) only through a relation that has triples for that entity in the user's graph. If the question
+    also names a relation (`relations`) that is available for the entity, the first edge must use that relation."""
     anchor_iris = [f"Watson:{e['entity_id']}" for e in entities[:2]]
     reach = {f"Watson:{e['entity_id']}": set(entity_edges(graph, e["entity_id"])) for e in entities[:2]} if graph is not None else None
-    rest = {"oneOf": _edge_variants(entities, shapes)}
-    first = _edge_variants(entities, shapes, anchored=anchor_iris, reach=reach) if anchor_iris else []
+    drop, skip = (count["drop"], count["skip"]) if count else (None, None)
+    rest = {"oneOf": _edge_variants(entities, shapes, drop=drop, skip=skip)}
+    first = _edge_variants(entities, shapes, anchored=anchor_iris, reach=reach, drop=drop, skip=skip) if anchor_iris else []
+    if relations and first:
+        wanted = {f"Watson:{p}" for p in relations}
+        named = [v for v in first if v["properties"]["p"]["const"] in wanted]
+        first = named or first                              # a named relation the entity does not have changes nothing
+    if kinds and first:
+        led_to = [v for v in _edge_variants(entities, shapes, anchored=anchor_iris, reach=reach, kinds=kinds, drop=drop, skip=skip) if v in first]
+        first = led_to or first                             # no edge to that kind from this entity: leave the choice open
     defs = {"rest": rest}
-    if first:
+    if count and count.get("only"):                          # a bare count: exactly one edge, from the documents' side to the counted kind (plus the edge that joins a passage to its document, when it is needed)
+        defs["first"] = {"oneOf": count["only"]}
+        edges = {"oneOf": [{"type": "array", "items": [{"$ref": "#/$defs/first"}, *count.get("then", [])]}]}
+    elif first:
         # llama-server ignores `prefixItems` when `items` is also present (checked with a probe: the model put a non-allowed value
         # first), so "the first edge uses the entity" is written as one fixed-length tuple per allowed length. $defs keeps the
         # grammar from repeating the whole edge list for every length.
@@ -222,11 +448,17 @@ def plan_schema(entities: list, shapes: dict, graph: Graph | None = None) -> dic
     else:
         edges = {"type": "array", "minItems": 1, "maxItems": MAX_EDGES, "items": {"$ref": "#/$defs/rest"}}
     var = {"type": "string", "enum": [*TYPED_VARS, *VALUE_VARS]}
+    select = {"type": "array", "minItems": 1, "maxItems": 5, "items": {"type": "object", "required": ["var", "agg", "of"], "properties": {
+        "var": var, "agg": {"type": "string", "enum": ["none", *AGGS]}, "of": {"type": "string", "enum": ["", *TYPED_VARS, *VALUE_VARS]}}}}
+    if count:                                  # a how-many question has one column: a distinct count of the counted kind (fixed-length tuple, as for edges)
+        one = {"type": "object", "required": ["var", "agg", "of"], "properties": {
+            "var": {"enum": ["?count"]}, "agg": {"enum": ["count_distinct"]}, "of": {"enum": count["of"] or [*TYPED_VARS]}}}
+        select = {"oneOf": [{"type": "array", "items": [one]}]}
     return {"type": "object", "required": ["edges", "select"], "$defs": defs, "properties": {
         "edges": edges,
-        "select": {"type": "array", "minItems": 1, "maxItems": 5, "items": {"type": "object", "required": ["var", "agg", "of"], "properties": {
-            "var": var, "agg": {"type": "string", "enum": ["none", *AGGS]}, "of": {"type": "string", "enum": ["", *TYPED_VARS, *VALUE_VARS]}}}},
-        "filters": {"type": "array", "maxItems": 3, "items": {"type": "object", "required": ["var", "op", "value"], "properties": {
+        "select": select,
+        # edges fixed and no number in the question: nothing to filter on
+        "filters": {"type": "array", "maxItems": 0 if count and count.get("only") else 3, "items": {"type": "object", "required": ["var", "op", "value"], "properties": {
             "var": {"type": "string", "enum": VALUE_VARS}, "op": {"type": "string", "enum": OPS}, "value": {"type": "string"}}}},
         "order_by": {"type": "string", "enum": ["", *TYPED_VARS, *VALUE_VARS]}, "descending": {"type": "boolean"},
         "limit": {"type": "integer"}}}
@@ -248,7 +480,7 @@ def build_prompt(question: str, entities: list, shapes: dict) -> str:
 
 
 # ---------------------------------------------------------------- plan -> SPARQL
-def tidy(plan: dict) -> list:
+def tidy(plan: dict, single: bool = False) -> list:
     """Mechanical clean-up that never changes what the plan asks. Returns what it did, for the UI.
     Drops repeated edges (small models loop) and renames an aggregate's result variable when it clashes with an edge variable."""
     notes, seen, kept = [], set(), []
@@ -260,9 +492,15 @@ def tidy(plan: dict) -> list:
     if len(kept) != len(plan.get("edges") or []):
         notes.append(f"removed {len(plan['edges']) - len(kept)} repeated edge(s)")
     plan["edges"] = kept
+    if single and (plan.get("order_by") or plan.get("limit")):           # one number: nothing to order or cut
+        plan["order_by"], plan["descending"], plan["limit"] = "", False, 0
+        notes.append("dropped the ordering and limit (a single number has none)")
     used = {t for e in kept for t in (e.get("s"), e.get("o")) if _VAR.match(t or "")}
     for c in plan.get("select") or []:
         if c.get("agg") not in (None, "none") and c.get("var") in used:
+            if not c.get("of"):                                          # "count distinct ?document" with no 'of': it is the variable itself
+                c["of"] = c["var"]
+                notes.append(f"counted {c['var']} (the plan left 'of' empty)")
             new = c["var"] + "_result"
             if plan.get("order_by") == c["var"]:
                 plan["order_by"] = new
@@ -271,7 +509,37 @@ def tidy(plan: dict) -> list:
     return notes
 
 
-def semantic_check(plan: dict, entities: list | None = None, numeric_values: set | None = None) -> str | None:
+def count_problem(plan: dict, count: dict, named: list) -> str | None:
+    """What a how-many plan must satisfy (see count_setup), for the cases the grammar cannot enforce (no kind found, or the grammar
+    was not used). Counting with no named entity counts what the documents the user may read cover, so the counted thing must be
+    joined to a document or a passage; otherwise it would count catalog entities that no readable document mentions."""
+    sel, terms = plan.get("select") or [], {t for e in plan.get("edges") or [] for t in (e.get("s"), e.get("o"))}
+    if len(sel) != 1 or sel[0].get("agg") != "count_distinct":
+        return "This question asks for one number. Select exactly one column: a count_distinct of the thing being counted, and nothing else."
+    of = sel[0].get("of")
+    if count.get("of") and of not in count["of"]:
+        return f"The question counts {count['kind']}. Set 'of' to {' or '.join(count['of'])}."
+    unwanted = sorted(t for t in terms if TYPED_VARS.get(t) in count["drop"])
+    if unwanted:
+        return f"{', '.join(unwanted)} is not needed to count this, and would narrow the count to things that have one. Leave it out."
+    for e in plan.get("edges") or []:                                    # the document-level relation, where the passage-level one is the complete record
+        if (e["p"].split(":", 1)[-1], TYPED_VARS.get(e["s"]), TYPED_VARS.get(e["o"])) in count["skip"]:
+            return (f"{e['p']} is also available with ?chunk as the subject, which is the complete record. Use ?chunk instead of "
+                    f"{e['s']}, so the count is not limited to what the document level holds.")
+    uses = Counter(t for e in plan.get("edges") or [] for t in (e["s"], e["o"]))
+    for v in sorted(t for t in uses if uses[t] == 1 and t in TYPED_VARS and t != of):                  # a variable in one edge only is a requirement, not a path
+        if TYPED_VARS[v] not in COUNT_SCOPE and TYPED_VARS[v] not in count["mentioned"]:
+            return (f"{v} is in one edge only, so it only requires the counted things to have one, and the question does not ask about it. "
+                    f"Remove that edge: the count is of {of}.")
+    if count["kind"] in STRUCTURAL_KINDS:                                    # documents, spaces: counted as they are, not through what they mention
+        return None
+    if not named and TYPED_VARS.get(of) not in COUNT_SCOPE and not any(TYPED_VARS.get(t) in COUNT_SCOPE for t in terms):
+        return (f"Count what the documents the user may read cover: join {of} to a ?chunk or ?document with an edge such as mentions or covers, "
+                f"so the count follows the user's access and does not include things no readable document mentions.")
+    return None
+
+
+def semantic_check(plan: dict, entities: list | None = None, numeric_values: set | None = None, count: dict | None = None) -> str | None:
     """The few things the grammar cannot guarantee. Messages are written for the model, which sees them on the next attempt."""
     edges, sel = plan.get("edges") or [], plan.get("select") or []
     terms = {t for e in edges for t in (e.get("s"), e.get("o"))}
@@ -304,7 +572,7 @@ def semantic_check(plan: dict, entities: list | None = None, numeric_values: set
                     f"(for example Watson:sentimentScore or Watson:quality_score).")
     if len({c.get("var") for c in sel}) != len(sel):
         return "A column appears twice in the select list."
-    return None
+    return count_problem(plan, count, named) if count else None
 
 
 def _connected(edges: list) -> bool:
@@ -364,6 +632,16 @@ def render(plan: dict) -> tuple:
         else:
             has_agg = True
             cols.append(f"({AGGS[agg].format(v=of)} AS {var})")
+    if not has_agg:                                                     # show what the answer was reached through, so each row says how
+        shown = {c["var"] for c in sel}
+        next_to_answer = {t for e in edges for a, t in ((e["s"], e["o"]), (e["o"], e["s"])) if a in shown}      # directly linked to a selected variable
+        in_edges = {v: sum(v in (e["s"], e["o"]) for e in edges) for v in used}
+        for v in dict.fromkeys(used):
+            if v in shown or v not in next_to_answer or in_edges[v] < 2 or TYPED_VARS[v] in ("DocumentChunk", "SentimentAssertion"):
+                continue                                                # leaves, join nodes and side branches would only multiply rows
+            prop = "Watson:documentTitle" if v == "?document" else "rdfs:label"
+            optional.append(f"  OPTIONAL {{ {v} {prop} {v}_label . }}")
+            cols += [v, v + "_label"]
     for f in plan.get("filters") or []:
         v, op, val = f["var"], f["op"], str(f.get("value", ""))
         if op == "contains":
@@ -457,10 +735,58 @@ def empty_feedback(plan: dict, entities: list, g: Graph) -> str:
     return msg + " Use only relations that exist."
 
 
-def generate(question: str, entities: list, slice_graph: Graph, on_attempt=None) -> dict:
-    """{status: ok|empty|failed, sparql, plan, columns, rows, attempts: [{n, plan, sparql, error|note, seconds}]}."""
+def _touches(prop: str, cls: str, shapes: dict) -> bool:
+    """Does this relation have `cls` (the entity's kind) at one end? Read from the user's graph, or from the ontology's domain and range
+    when the user's graph has no triple of it at all."""
+    if any(p == prop and cls in (sc, oc) for (p, sc, oc) in shapes):
+        return True
+    o = kgmod.get().ontology()
+    return any(kgmod.local(x) == cls for x in [*o.objects(W[prop], RDFS.domain), *o.objects(W[prop], RDFS.range)])
+
+
+def relation_gap(entities: list, shapes: dict, graph: Graph, relations: set) -> dict | None:
+    """The question names relations (in its words or by meaning) that apply DIRECTLY to its entity, and the entity has none of them in
+    the part of the graph this user may read. Without this the plan would quietly use another relation and answer a different
+    question ("competitors of X" answered with the brands co-mentioned with X). Returns {relations, entity, reason} or None.
+    A relation that does not touch the entity's kind (forGeography for a brand) may still be reached in two hops: never a gap."""
+    anchored = [e for e in entities[:2] if e.get("entity_id") and KIND_CLASS.get(e.get("kind"))]
+    if not relations or not anchored:
+        return None
+    anc = _ancestors()
+    for e in anchored:
+        cls, have = KIND_CLASS[e["kind"]], {p for (p, _, _) in entity_edges(graph, e["entity_id"], anc)}
+        for r in relations:
+            if not _touches(r, cls, shapes) or r in have:
+                return None
+    e = anchored[0]
+    ontology = kgmod.get().ontology()
+
+    def plain(prop: str) -> str:                                     # the ontology's own label ('contains drug'), else the name in words
+        lab = ontology.value(W[prop], RDFS.label)
+        return str(lab) if lab is not None else re.sub(r"(?<!^)(?=[A-Z])", " ", prop).replace("_", " ").lower()
+    words = ", ".join(plain(r) for r in sorted(relations))
+    has = ", ".join(sorted({plain(p) for (p, _, _) in entity_edges(graph, e["entity_id"], anc)}))
+    return {"relations": sorted(relations), "entity": e["entity_id"], "reason": (
+        f"The part of the graph you may read has no '{words}' relation for {e['label']}, so there is nothing to query for it."
+        + (f" What it does have: {has}." if has else ""))}
+
+
+def generate(question: str, entities: list, slice_graph: Graph, on_attempt=None, terms: dict | None = None) -> dict:
+    """{status: ok|empty|failed, sparql, plan, columns, rows, attempts: [{n, plan, sparql, error|note, seconds}]}.
+    `terms` is semantic.match(...): everyday words matched to ontology terms by meaning (step 3). The exact-word rules are always
+    applied too, and are the only ones used when the embedding model is unavailable."""
     shapes = edge_shapes(slice_graph)
-    prompt, schema = build_prompt(question, entities, shapes), plan_schema(entities, shapes, slice_graph)
+    relations, kinds = named_relations(question, shapes), answer_kinds(question, entities)
+    if terms and terms.get("available"):
+        relations, kinds = relations | set(terms["relations_selected"]), kinds | set(terms["kinds_selected"])
+    count = count_setup(question, entities, shapes, slice_graph)
+    gap = relation_gap(entities, shapes, slice_graph, relations)
+    if gap and count and count.get("route") and set(gap["relations"]) <= count["route"]:
+        gap = None                                                   # 'documents associated with X' where no readable document links to X is a count of 0; another relation is still a gap
+    if gap:                                                          # say so, instead of letting the model answer with another relation
+        return {"status": "no_relation", "sparql": None, "columns": [], "rows": [], "attempts": [], "prompt": None,
+                "reason": gap["reason"], "missing": gap["relations"]}
+    prompt, schema = build_prompt(question, entities, shapes), plan_schema(entities, shapes, slice_graph, relations, kinds, count)
     attempts, last_ok, feedback = [], None, ""
 
     def record(att):
@@ -483,8 +809,8 @@ def generate(question: str, entities: list, slice_graph: Graph, on_attempt=None)
         except json.JSONDecodeError as e:
             err = f"The reply was not valid JSON ({e.msg})."
         if err is None:
-            att["tidied"] = tidy(plan)
-            err = semantic_check(plan, entities, numeric_value_vars(plan, slice_graph))
+            att["tidied"] = tidy(plan, single=bool(count))
+            err = semantic_check(plan, entities, numeric_value_vars(plan, slice_graph), count)
         if err is None:
             body, err = render(plan)
             if err is None:
@@ -498,7 +824,8 @@ def generate(question: str, entities: list, slice_graph: Graph, on_attempt=None)
                 if res["row_count"] > 0 or n == config.SPARQL_ATTEMPTS:
                     record(att)
                     return {"status": "ok" if res["row_count"] else "empty", "sparql": q, "plan": plan, "columns": res["columns"],
-                            "rows": res["rows"], "row_count": res["row_count"], "attempts": attempts, "prompt": prompt}
+                            "rows": res["rows"], "row_count": res["row_count"], "attempts": attempts, "prompt": prompt,
+                            "counted": count["kind"] if count else None}
                 last_ok = {"sparql": q, "plan": plan, **res}
                 err = empty_feedback(plan, entities, slice_graph)
                 att["note"] = "valid, no rows"

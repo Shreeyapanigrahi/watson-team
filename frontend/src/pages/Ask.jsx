@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
+import { useAuth } from '../auth'
 import { Badge, ErrorBox, Notice, SensitivityBadge, useAsync } from '../ui'
 
-const STEP_TITLES = {
+export const STEP_TITLES = {
   1: 'Question received', 2: 'Access check', 3: 'Entities and route', 4: 'SPARQL by the local LLM',
   5: 'Entity mapping', 6: 'Evidence and lineage', 7: 'Answer by the local LLM', 8: 'Hallucination check',
 }
@@ -39,14 +40,42 @@ function summary(ev) {
   switch (ev.key) {
     case 'question': return `${d.user?.user} (${d.user?.role}) · mode ${d.mode} · model ${d.llm?.model}${d.llm?.available ? '' : ' (NOT available)'}`
     case 'access': return ev.status === 'running' ? 'Cutting out every document you may not read...' : `${d.documents_readable} readable, ${d.documents_withheld} withheld · graph ${d.triples_before} → ${d.triples_after} triples`
-    case 'understand': return `${d.entities?.length || 0} entities · route: ${d.route}`
-    case 'sparql': return ev.status === 'running' ? 'The model is writing the query...' : ev.status === 'skipped' ? d.reason : `${d.status} · ${d.row_count ?? 0} rows · ${d.attempts?.length || 0} attempt(s)`
+    case 'understand': return `${d.entities?.length || 0} entities · route: ${d.route}${d.terms?.available ? ` · ${(d.terms.relations_selected?.length || 0) + (d.terms.kinds_selected?.length || 0)} term(s) matched by meaning` : ''}`
+    case 'sparql': return ev.status === 'running' ? 'The model is writing the query...' : ev.status === 'skipped' || d.status === 'no_relation' ? d.reason : `${d.status} · ${d.row_count ?? 0} rows · ${d.attempts?.length || 0} attempt(s)`
     case 'mapping': return ev.status === 'skipped' ? d.reason : `${d.mapped?.length || 0} mapped · ${d.query_path?.length || 0} hop(s) in the query path${d.query_entities_not_in_question?.length ? ` · ${d.query_entities_not_in_question.length} extra in query` : ''}`
     case 'evidence': return ev.status === 'running' ? 'Searching your passages and tracing lineage...' : `${d.items?.length || 0} evidence items · ${d.lineage?.length || 0} documents traced`
     case 'answer': return ev.status === 'running' ? 'The model is writing from the evidence...' : `${d.mode}${d.seconds ? ` · ${d.seconds}s` : ''}${d.output_tokens ? ` · ${d.output_tokens} tokens` : ''}`
     case 'verify': return `${d.counts?.supported || 0} supported · ${d.counts?.weak || 0} weak · ${d.counts?.unsupported || 0} removed · risk ${d.risk}`
     default: return ''
   }
+}
+
+// ---- your everyday words matched to the ontology's technical terms by meaning (layer3/semantic.py, glossary in layer3/glossary.json)
+function Terms({ t }) {
+  if (!t.available) return <Notice tone="warn" title="Matching by meaning is not available">{t.reason} The exact-word rules were used instead.</Notice>
+  const rows = [...t.relations.map((x) => ({ ...x, type: 'relation' })), ...t.kinds.map((x) => ({ ...x, type: 'answer kind' }))]
+    .filter((x) => x.selected || x.score >= 0.6)
+  const none = !t.relations_selected.length && !t.kinds_selected.length
+  return (
+    <div className="stack">
+      <b>Your words matched to ontology terms, by meaning</b>
+      {none && <p className="muted small">Nothing matched clearly enough, so the model was free to choose the relation.</p>}
+      {rows.length > 0 && (
+        <div className="table-wrap"><table>
+          <thead><tr><th>Your words</th><th>Ontology term</th><th>Type</th><th>Score</th><th>Closest glossary phrase</th><th>Narrowed the query</th></tr></thead>
+          <tbody>{rows.map((x) => (
+            <tr key={x.type + x.term}>
+              <td>“{x.words}”</td><td className="mono">{x.term}</td><td>{x.type}</td><td>{x.score}</td><td>{x.phrase}</td>
+              <td>{x.selected ? <Badge tone="ok">yes</Badge> : <span className="muted">no</span>}</td>
+            </tr>))}</tbody>
+        </table></div>
+      )}
+      <p className="muted small">
+        A term narrows the model's first edge only at a score of {t.thresholds.relation} or more for a relation, {t.thresholds.kind} for an answer kind. Lower scores are shown, not used.
+        The glossary ({t.glossary_status === 'DRAFT' ? 'still a draft, not yet reviewed' : 'reviewed'}) is layer3/glossary.json.
+      </p>
+    </div>
+  )
 }
 
 function StepBody({ ev }) {
@@ -73,6 +102,7 @@ function StepBody({ ev }) {
           </div>
           <div><Badge tone="ok">{d.route}</Badge></div>
           <ul className="plain-list">{d.reasons?.map((r) => <li key={r}>{r}</li>)}</ul>
+          {d.terms && <Terms t={d.terms} />}
         </div>
       )
     case 'sparql':
@@ -163,7 +193,7 @@ function StepBody({ ev }) {
   }
 }
 
-function Lineage({ l }) {
+export function Lineage({ l }) {
   return (
     <div className="src-card">
       <div className="row"><Link to={`/documents/${encodeURIComponent(l.document_uri)}`} className="mono">{l.document_uri}</Link><SensitivityBadge level={l.sensitivity_level} /><Badge tone="neutral">{l.study_type}</Badge></div>
@@ -181,16 +211,22 @@ function Lineage({ l }) {
 const RUN_TONE = { answered: 'ok', no_supported_answer: 'warn', no_evidence: 'warn' }
 
 // ---- the user's own past questions (an ADMIN sees everyone's); click one to put it back in the box
-function Recent({ runs, loading, error, onPick, disabled }) {
+// Everyone can delete their own entries; the admin's list also shows other people's entries, which can be read but not deleted here.
+function Recent({ runs, loading, error, onPick, disabled, me, onDelete, onClear, deleteError }) {
+  const mine = runs?.filter((r) => r.user_id === me).length || 0
   return (
     <aside className="card stack recent" aria-label="Recent questions">
-      <h2 style={{ margin: 0 }}>Recent</h2>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <h2 style={{ margin: 0 }}>Recent</h2>
+        {mine > 0 && <button type="button" className="btn btn-small btn-ghost" disabled={disabled} onClick={onClear}>Clear {runs.length === mine ? 'all' : 'mine'}</button>}
+      </div>
       {error && <p className="muted small">Could not load history: {error.message}</p>}
+      {deleteError && <p className="muted small" role="alert">Could not delete: {deleteError}</p>}
       {!error && loading && !runs && <p className="muted small">Loading...</p>}
       {runs && runs.length === 0 && <p className="muted small">No questions yet. Ask one and it will be listed here.</p>}
       <ul className="recent-list">
-        {runs?.map((r, i) => (
-          <li key={`${r.time}-${i}`}>
+        {runs?.map((r) => (
+          <li key={r.id} className="recent-row">
             <button type="button" className="recent-item" disabled={disabled} onClick={() => onPick(r)} title="Put this question back in the box">
               <span className="recent-q">{r.question}</span>
               <span className="row small muted">
@@ -199,8 +235,12 @@ function Recent({ runs, loading, error, onPick, disabled }) {
                 {r.sparql && <span>SPARQL {r.sparql}</span>}
                 <span>{r.seconds}s</span>
                 <span>{new Date(r.time).toLocaleString()}</span>
+                {r.user_id !== me && <span>by {r.user_id}</span>}
               </span>
             </button>
+            {r.user_id === me && (
+              <button type="button" className="btn btn-small btn-ghost recent-del" disabled={disabled} onClick={() => onDelete(r)} aria-label={`Delete: ${r.question}`} title="Delete this question">Delete</button>
+            )}
           </li>
         ))}
       </ul>
@@ -208,7 +248,7 @@ function Recent({ runs, loading, error, onPick, disabled }) {
   )
 }
 
-function Step({ n, ev }) {
+export function Step({ n, ev }) {
   const status = ev ? ev.status : 'pending'
   return (
     <details className={`step step-${status}`} open={status !== 'pending' && status !== 'skipped'}>
@@ -237,12 +277,11 @@ function Answer({ r }) {
         <span className="muted small">{(r.timings_ms.total / 1000).toFixed(1)}s</span>
       </div>
       {r.message && <Notice tone="warn">{r.message}</Notice>}
-      {r.short_answer && (
-        <div className="answer-short"><span className="muted small">In one line</span><p>{r.short_answer.text} {r.short_answer.cites.map((c) => <Cite key={c} id={c} sources={sources} />)}</p></div>
+      {r.lines.length === 0 && r.short_answer && (
+        <p className="answer-line">{r.short_answer.text} {r.short_answer.cites.map((c) => <Cite key={c} id={c} sources={sources} />)}</p>
       )}
       {r.lines.length > 0 && (
         <div className="stack">
-          <span className="muted small">In plain English, every line with its source</span>
           {r.lines.map((l, i) => (
             <p key={i} className="answer-line">
               {l.text} {l.cites.map((c) => <Cite key={c} id={c} sources={sources} />)}
@@ -275,7 +314,7 @@ function Answer({ r }) {
   )
 }
 
-function Compare({ plain, semantic }) {
+export function Compare({ plain, semantic }) {
   const col = (title, run) => {
     const r = run?.final
     const docs = r ? [...new Set(r.sources.flatMap((s) => s.documents))] : []
@@ -285,7 +324,8 @@ function Compare({ plain, semantic }) {
         {!r ? <span className="muted">{run?.busy ? 'Running...' : 'Not run'}</span> : (
           <>
             <div className="row"><Badge tone={r.status === 'answered' ? 'ok' : 'warn'}>{r.status.replace(/_/g, ' ')}</Badge><span className="muted small">{(r.timings_ms.total / 1000).toFixed(1)}s · risk {r.risk}</span></div>
-            <p>{r.short_answer ? r.short_answer.text : <span className="muted">No supported answer.</span>}</p>
+            {r.lines.length ? r.lines.map((l, i) => <p key={i}>{l.text} {l.cites.map((c) => <span key={c} className="cite">{c}</span>)}</p>)
+              : <p>{r.short_answer ? r.short_answer.text : <span className="muted">No supported answer.</span>}</p>}
             <ul className="plain-list small">
               <li>{r.lines.length} supported lines, {r.removed.length} removed</li>
               <li>Cited documents: {docs.length ? docs.join(', ') : 'none'}</li>
@@ -304,6 +344,8 @@ export default function Ask() {
   const [mode, setMode] = useState('semantic')
   const [runs, setRuns] = useState({})
   const [error, setError] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
+  const { user } = useAuth()
   const abort = useRef(null)
   const { data: status } = useAsync(() => api.l3Status(), [])
   const { data: hist, error: histError, loading: histLoading, reload: reloadHistory } = useAsync(() => api.l3History(), [])
@@ -343,6 +385,19 @@ export default function Ask() {
   const pick = (r) => {
     setQuestion(r.question)
     if (['semantic', 'plain'].includes(r.mode)) setMode(r.mode)
+  }
+  const removeFromHistory = async (fn) => {
+    setDeleteError(null)
+    try {
+      await fn()
+    } catch (e) {
+      setDeleteError(e.message)
+    }
+    reloadHistory()
+  }
+  const onDelete = (r) => removeFromHistory(() => api.l3DeleteRun(r.id))
+  const onClear = () => {
+    if (window.confirm('Delete all of your own recent questions? Other users\' questions are not touched. This cannot be undone.')) removeFromHistory(() => api.l3ClearHistory())
   }
   const busy = Object.values(runs).some((r) => r.busy)
   const shown = mode === 'compare' ? 'semantic' : mode
@@ -386,7 +441,7 @@ export default function Ask() {
       )}
       {mode === 'compare' && (runs.plain || runs.semantic) && <Compare plain={runs.plain} semantic={runs.semantic} />}
     </div>
-    <Recent runs={hist?.runs} loading={histLoading} error={histError} onPick={pick} disabled={busy} />
+    <Recent runs={hist?.runs} loading={histLoading} error={histError} onPick={pick} disabled={busy} me={user.user_id} onDelete={onDelete} onClear={onClear} deleteError={deleteError} />
     </div>
   )
 }

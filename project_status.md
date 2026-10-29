@@ -15,6 +15,10 @@ As of 2026-10-29. **Layer 3 now uses llama-server (llama.cpp) instead of Ollama*
   visibility differs by role (readable documents 9 / 27 / 19 / 43), the viewer's searches returned only PUBLIC and INTERNAL passages, privileged endpoints returned 403 for roles without them.
 - **Layer 2 UI written and compiled** (`npm run build` succeeds, 58 modules): Knowledge space, Entities, Entity detail, Data catalog (overview, browse, mappings), Ontology,
   Graph health, SPARQL queries, and a Knowledge tab on Document detail. Wired into the existing navigation.
+- **Knowledge space filters (2026-10-29):** Document, Brand, Indication, Drug, Therapeutic area, Geography and Relationship filters plus a per-document facts card (`change_log.md`). Verified: full Layer 1+2+3 regression, 254 passed in 5 min 49 s; 33 Layer 2 ABAC and API tests pass (7 new), real-data numbers for viewer and admin, `npm run build` succeeds. **Not verified: the screen has not been opened in a browser** (filter bar layout, the bold outline on filtered nodes, the facts card). Restart uvicorn and hard-refresh to see it.
+- **UI changes (2026-10-29), compiled but never opened in a browser:** white sidebar and page, viewer without the Layer 2 and About sections and with a browser-style frame, redesigned sign-in page (blister-pack panel, role tiles), and a ChatGPT-style home page for the viewer (conversation, New chat, Recent in the sidebar; Dashboard at `/dashboard`). Layout, colours, scrolling, the settings menu and the dark variants are unchecked.
+- **Counts of documents tied to one entity (2026-10-29):** "how many documents are associated with {X}" is right for every entity of six kinds, admin and viewer (87/87 each, real model, independent counts); full regression 280 passed. Limits in `design_decisions.md` 27.
+- **Username and password sign-in (2026-10-29):** one account per role, hashed passwords set with `python -m layer1.set_password`, lockout, 8-hour sessions, logout, change password, audit events. Verified: full Layer 1+2+3 regression, 269 passed (15 new auth tests); `npm run build` succeeds. **Not verified:** the login and Account screens in a browser, and a live server with real passwords. Passwords must be set on each new machine before anyone can sign in.
 - Bug found while checking the API shape and fixed: the entity grounding table would have shown blank column types (`data_type` read from the wrong key). Test added.
 - Documents updated: README, project_spec, architecture, `architecture/layer2_architecture.md`, design_decisions (11-19), nfr_design, CLAUDE.md.
 
@@ -50,7 +54,7 @@ As of 2026-10-29. **Layer 3 now uses llama-server (llama.cpp) instead of Ollama*
 | Reuse anything from the earlier `D:\watson` / `D:\watson_sai` build? | Not inspected; this project started clean |
 | Read the four validation checks (brief section 4.10) against our SHACL mapping | We mapped them from photographed pages; a person should confirm the wording |
 | Expiry retention for the three study types the brief does not specify (1095 days assumed) | Assumption flagged in `design_decisions.md` |
-| Real authentication? | Prototype uses pick-a-user login; see `nfr_design.md` |
+| SSO / MFA / HTTPS for sign-in? | Username and password per role now exist (2026-10-29); the rest is listed in `nfr_design.md` |
 | Licence of the Databricks model files | Check before committing them or the generated catalog (9.8 MB) to GitHub |
 | Classification order (public, internal, restricted, confidential) | The source lists four levels but defines no ranking |
 | `masterdata_address_id` has two classification tags (internal and restricted) | Left unclassified until a steward decides |

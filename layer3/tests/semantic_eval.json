@@ -1,0 +1,39 @@
+{
+  "about": "Paraphrased questions with the relation(s) the first edge from the named entity should use, and the kind of thing asked for (null = a plain value or no single kind). Written by Claude before any tuning. 'dev' was used to choose the thresholds in layer3/config.py; 'test' was not looked at while tuning. Expected labels are my reading of the data and may be wrong.",
+  "dev": [
+    {"q": "What medicine is in Dupixa?", "relations": ["containsDrug"], "kind": "Drug"},
+    {"q": "Which disease is Dupixa meant to treat?", "relations": ["targetedIndication"], "kind": "Indication"},
+    {"q": "What area of medicine does Dupixa fall under?", "relations": ["inTherapeuticArea"], "kind": "TherapeuticArea"},
+    {"q": "Who manufactures Opdivra?", "relations": ["company"], "kind": null},
+    {"q": "Which products rival Opdivra?", "relations": ["competesWithin"], "kind": "Brand"},
+    {"q": "Which brands show up in the same passages as Opdivra?", "relations": ["coMentionedWith"], "kind": "Brand"},
+    {"q": "What class of drug is dupilumib?", "relations": ["hasDrugClass"], "kind": "DrugClass"},
+    {"q": "In which countries is sentiment for Eliquex measured?", "relations": ["hasSentiment", "forBrand"], "kind": "Geography"},
+    {"q": "How do doctors perceive Eliquex?", "relations": ["hasSentiment", "forBrand"], "kind": "SentimentAssertion"},
+    {"q": "Which reports discuss Eliquex?", "relations": ["mentionsBrand"], "kind": "MarketResearchDocument"},
+    {"q": "Which brands are aimed at heart failure?", "relations": ["targetedIndication"], "kind": "Brand"},
+    {"q": "Which countries are covered by documents about Opdivra?", "relations": ["mentionsBrand", "coversGeography"], "kind": "Geography"},
+    {"q": "Name the active ingredient of Eliquex", "relations": ["containsDrug"], "kind": "Drug"},
+    {"q": "What is Eliquex prescribed for?", "relations": ["targetedIndication"], "kind": null},
+    {"q": "Which company sells Dupixa?", "relations": ["company"], "kind": null},
+    {"q": "Which brands are competitors of Eliquex?", "relations": ["competesWithin"], "kind": "Brand"}
+  ],
+  "test": [
+    {"q": "Which molecule does Opdivra consist of?", "relations": ["containsDrug"], "kind": "Drug"},
+    {"q": "What condition does Eliquex treat?", "relations": ["targetedIndication"], "kind": "Indication"},
+    {"q": "Which specialty is Opdivra in?", "relations": ["inTherapeuticArea"], "kind": "TherapeuticArea"},
+    {"q": "Which firm owns Dupixa?", "relations": ["company"], "kind": null},
+    {"q": "Who are the main competitors of Dupixa?", "relations": ["competesWithin"], "kind": "Brand"},
+    {"q": "Which brands are discussed together with Eliquex?", "relations": ["coMentionedWith"], "kind": "Brand"},
+    {"q": "What type of drug is dupilumib?", "relations": ["hasDrugClass"], "kind": "DrugClass"},
+    {"q": "What do HCPs think about Opdivra?", "relations": ["hasSentiment", "forBrand"], "kind": "SentimentAssertion"},
+    {"q": "Which studies talk about Dupixa?", "relations": ["mentionsBrand"], "kind": "MarketResearchDocument"},
+    {"q": "Which brands are used for atopic dermatitis?", "relations": ["targetedIndication"], "kind": "Brand"},
+    {"q": "Which drug is inside Eliquex?", "relations": ["containsDrug"], "kind": "Drug"},
+    {"q": "Dupixa is made by which company?", "relations": ["company"], "kind": null},
+    {"q": "Which therapeutic area does Eliquex belong to?", "relations": ["inTherapeuticArea"], "kind": "TherapeuticArea"},
+    {"q": "Which brands rival Eliquex?", "relations": ["competesWithin"], "kind": "Brand"},
+    {"q": "What is the drug class of dupilumib?", "relations": ["hasDrugClass"], "kind": "DrugClass"},
+    {"q": "Which brands are mentioned in the same passages as Dupixa?", "relations": ["coMentionedWith"], "kind": "Brand"}
+  ]
+}

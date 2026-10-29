@@ -15,7 +15,7 @@ import time
 from layer1 import audit_log
 from layer2 import telemetry
 
-from . import answer as answer_mod, config, evidence as evidence_mod, guard, history, llm, mapping, sparql_gen, understand, user_graph
+from . import answer as answer_mod, config, evidence as evidence_mod, guard, history, llm, mapping, semantic as semantic_mod, sparql_gen, understand, user_graph
 
 
 def _ev(step, key, title, status, data=None, started=None):
@@ -57,6 +57,8 @@ def ask(user: dict, question: str, mode: str = "semantic"):
     # ---- 3 entities and route
     t = time.time()
     und = understand.understand(question)
+    if semantic:                                                  # everyday words -> ontology terms, by meaning (shown in step 3, used in step 4)
+        und["terms"] = semantic_terms = semantic_mod.match(question, und["entities"])
     timings["understand"] = int((time.time() - t) * 1000)
     yield _ev(3, "understand", "Entities in the question and the path taken", "done", und, t)
 
@@ -65,9 +67,9 @@ def ask(user: dict, question: str, mode: str = "semantic"):
     if semantic:
         t = time.time()
         yield _ev(4, "sparql", "SPARQL written by the local LLM", "running", {"model": config.LLM_MODEL})
-        sparql_res = sparql_gen.generate(question, und["entities"], sl.graph)
+        sparql_res = sparql_gen.generate(question, und["entities"], sl.graph, terms=semantic_terms)
         timings["sparql"] = int((time.time() - t) * 1000)
-        status = {"ok": "done", "empty": "warn", "failed": "warn"}[sparql_res["status"]]
+        status = {"ok": "done", "empty": "warn", "failed": "warn", "no_relation": "warn"}[sparql_res["status"]]
         yield _ev(4, "sparql", "SPARQL written by the local LLM", status,
                   {k: sparql_res.get(k) for k in ("status", "sparql", "columns", "row_count", "attempts", "reason")}
                   | {"rows": (sparql_res.get("rows") or [])[:15], "model": config.LLM_MODEL}, t)
@@ -166,11 +168,13 @@ def _why(s: dict) -> str:
 
 
 def _message(status, draft, sparql_res):
+    gap = (sparql_res["reason"] + " No graph facts were used" + ("." if status == "answered" else "; the passages did not answer it either.") + " "
+           ) if sparql_res and sparql_res["status"] == "no_relation" else ""
     if status == "no_evidence":
-        return "Nothing you are allowed to read matches this question, so there is nothing to answer from."
+        return gap + "Nothing you are allowed to read matches this question, so there is nothing to answer from."
     if status == "no_supported_answer":
-        return "The model's draft did not hold up against the evidence, so no answer is shown. See the removed lines and the steps above."
-    notes = []
+        return gap + "The model's draft did not hold up against the evidence, so no answer is shown. See the removed lines and the steps above."
+    notes = [gap.strip()] if gap else []
     if draft["mode"] == "extractive":
         notes.append("The local model was not reachable, so this answer quotes the best-matching evidence sentences instead of paraphrasing.")
     if sparql_res and sparql_res["status"] == "failed":

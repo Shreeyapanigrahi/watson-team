@@ -21,11 +21,11 @@ Sections marked (gap) are things the brief leaves unclear, with the choice we ma
 
 ## Layer 1 interfaces
 
-REST API in `layer1/api/main.py` (FastAPI). Bearer token from `POST /api/login`.
+REST API in `layer1/api/main.py` (FastAPI). Bearer token from `POST /api/login` with `{username, password}` (one account per role: `viewer`, `analyst`, `spoc`, `admin`). A wrong username and a wrong password both give 401 "Wrong username or password"; 429 after 5 wrong passwords for 5 minutes; 503 until passwords have been set (`python -m layer1.set_password`). The token expires after 8 hours.
 
 | Endpoint | Purpose | Who |
 |---|---|---|
-| `GET /api/users`, `POST /api/login`, `GET /api/me`, `GET /api/meta` | Demo login and reference data | all |
+| `POST /api/login`, `POST /api/logout`, `POST /api/me/password`, `GET /api/me`, `GET /api/meta` | Sign in and out, change own password (current + new, min 10 characters; ends the user's other sessions), who am I, reference data | login: anyone; the rest: signed in |
 | `GET/POST /api/documents` | List (ABAC-filtered) / upload | all |
 | `GET /api/documents/{uri}`, `/content` | Detail / chunks and text | per ABAC |
 | `POST /api/documents/{uri}/review` | Approve or reject | SPOC (own TA), ADMIN |
@@ -62,6 +62,9 @@ Mounted in the same app at `/api/l2` (`layer2/api/router.py`). Every read is fil
 | Endpoint | Purpose | Who |
 |---|---|---|
 | `GET /status`, `/spaces`, `/entities`, `/entities/{id}`, `/graph`, `/ontology` | Knowledge space, entities, graph, ontology | all (ABAC-filtered) |
+| `GET /graph?documents=&brand=&indication=&drug=&area=&geography=&relation=` | Filtered knowledge graph. Comma-separated ids; OR within a filter, AND across filters; applied before `limit`; unknown or wrong-kind id gives 422 | all (ABAC-filtered) |
+| `GET /graph/filters?space=` | Options for each filter (documents, brands, indications, drugs, areas, geographies, relationships) with counts, from readable documents only | all (ABAC-filtered) |
+| `GET /documents/{uri}/facts` | One document's facts as subject-relationship-object statements with source (document, passages, catalog), plus sentiment | per document access (403 and audit if unreadable) |
 | `GET /catalog/summary`, `/catalog/tables`, `/catalog/table`, `/catalog/search`, `/catalog/mappings` | Data catalog and every mapping into Watson | all |
 | `GET /documents/{uri}/knowledge` | Enrichment, mentions, sentiment, lineage for one document | per document access |
 | `POST /documents/{uri}/enrich`, `GET /enrichment` | Re-run or list enrichment | SPOC (own TA), ADMIN |

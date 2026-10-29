@@ -52,6 +52,7 @@ export default function GraphView({ graph, onSelect, selected, height = 520, sho
           selector: 'node',
           style: {
             label: 'data(label)',
+            'font-family': 'Open Sans, sans-serif',
             'font-size': 10,
             color: ink,
             'text-valign': 'bottom',
@@ -88,6 +89,7 @@ export default function GraphView({ graph, onSelect, selected, height = 520, sho
           },
         },
         { selector: 'edge[label = "coMentionedWith"]', style: { 'line-style': 'dashed', 'target-arrow-shape': 'none', opacity: 0.8 } },
+        { selector: 'node[?matched]', style: { width: 30, height: 30, 'border-width': 3, 'border-color': ink, 'font-weight': 700, 'font-size': 11 } },
         { selector: '.faded', style: { opacity: 0.12 } },
         { selector: 'node:selected', style: { 'border-width': 3, 'border-color': css('--accent', '#0b6f6a') } },
       ],

@@ -16,6 +16,14 @@ LLM_TIMEOUT_S = 240
 SPARQL_ATTEMPTS = 3
 SPARQL_MAX_ROWS = 40
 
+# Step 3 (matching everyday words to ontology terms by meaning, layer3/semantic.py). A term is used to narrow the model's first edge
+# when its cosine score is at least the minimum and within SEM_MARGIN of the best term; at most SEM_TOP terms. Chosen on the 'dev'
+# questions in layer3/tests/semantic_eval.json (see design_decisions.md 25), not on the 'test' ones.
+SEM_MIN_RELATION = 0.85       # a wrong narrowing forces a wrong plan, a missed one changes nothing, so this favours precision over recall
+SEM_MIN_KIND = 0.80
+SEM_MARGIN = 0.05
+SEM_TOP = 3
+
 # Step 6 (evidence): chunks passed to the answer model, and the largest piece of one chunk we show it.
 EVIDENCE_CHUNKS = 5
 EVIDENCE_CHARS = 650

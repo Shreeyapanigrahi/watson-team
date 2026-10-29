@@ -10,12 +10,23 @@ export function AuthProvider({ children }) {
   const [meta, setMeta] = useState(null)
   const [ready, setReady] = useState(!hasToken())
 
-  const logout = useCallback(() => {
+  // clears the browser's session only; used when the server has already said the token is no good
+  const clearSession = useCallback(() => {
     setToken(null)
     setUser(null)
     setPermissions([])
     setMeta(null)
   }, [])
+
+  // sign out: ends the session on the server too (best effort), then clears it here
+  const logout = useCallback(async () => {
+    try {
+      await api.logout()
+    } catch {
+      /* the token may already have expired; signing out here is enough */
+    }
+    clearSession()
+  }, [clearSession])
 
   const load = useCallback(async () => {
     const [me, m] = await Promise.all([api.me(), api.meta()])
@@ -25,13 +36,13 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    setUnauthorizedHandler(logout)
-    if (hasToken()) load().catch(logout).finally(() => setReady(true))
-  }, [load, logout])
+    setUnauthorizedHandler(clearSession)
+    if (hasToken()) load().catch(clearSession).finally(() => setReady(true))
+  }, [load, clearSession])
 
   const login = useCallback(
-    async (userId) => {
-      const res = await api.login(userId)
+    async (username, password) => {
+      const res = await api.login(username, password)
       setToken(res.token)
       await load()
     },

@@ -1,0 +1,127 @@
+{
+  "status": "DRAFT written by Claude, NOT yet reviewed by a domain person. Edit freely; every line is a plain-English guess at how people phrase things.",
+  "purpose": "Maps the technical terms of the ontology (property and kind names) to the everyday words people use in questions, so a question can be matched to the right relation by meaning. Not used by the pipeline yet.",
+  "how_to_review": "For each entry: does 'means' say what the relation is in this data? Do the phrases sound like something a user would type? Delete wrong phrases, add missing ones, and fix anything where two entries could be confused.",
+  "properties": {
+    "containsDrug": {
+      "means": "A brand is made of a drug (its active ingredient).",
+      "phrases": ["contains which drug", "what drug does it have", "active ingredient", "which medicine is inside", "generic name of the brand", "molecule in the brand", "what is it made of"]
+    },
+    "targetedIndication": {
+      "means": "A brand is aimed at a disease or condition (its indication).",
+      "phrases": ["treats which disease", "used for which condition", "what is it prescribed for", "approved for", "which indication does it target", "what illness does the brand address"]
+    },
+    "inTherapeuticArea": {
+      "means": "A brand, an indication or a document belongs to an area of medicine (for example Oncology, Cardiology, Immunology).",
+      "phrases": ["which therapeutic area", "which area of medicine", "specialty", "which field does it belong to", "oncology or cardiology"]
+    },
+    "hasDrugClass": {
+      "means": "A drug belongs to a class of drugs, usually named by how it works.",
+      "phrases": ["which drug class", "class of medicine", "what type of drug is it", "mechanism class", "what kind of drug"]
+    },
+    "company": {
+      "means": "The company that makes or owns a brand. A plain text value, not a separate entity.",
+      "phrases": ["which company makes", "who is the manufacturer", "maker of the brand", "marketed by", "owned by which company", "who sells it"]
+    },
+    "competesWithin": {
+      "means": "Two brands are compared against each other in the same competitive landscape document.",
+      "phrases": ["competes with", "competitors of", "rival brands", "competing products", "compared against", "in the same competitive landscape"]
+    },
+    "coMentionedWith": {
+      "means": "Two brands are named in the same passage of a document. About text, not about the market.",
+      "phrases": ["mentioned together with", "talked about together with", "discussed alongside", "named in the same passage as", "appears with", "co-mentioned"]
+    },
+    "hasSentiment": {
+      "means": "A brand has recorded opinions (sentiment assertions) from market research.",
+      "phrases": ["what do doctors think of", "how is the brand viewed", "perception of the brand", "opinion on the brand", "sentiment about the brand"]
+    },
+    "forBrand": {
+      "means": "A sentiment assertion is about one brand.",
+      "phrases": ["sentiment about which brand", "which brand is this opinion about", "rating refers to which brand"]
+    },
+    "forGeography": {
+      "means": "A sentiment assertion was measured in one country or region.",
+      "phrases": ["sentiment in which country", "opinion by country", "perception in the market", "how does sentiment differ across regions"]
+    },
+    "forIndication": {
+      "means": "A sentiment assertion is about one disease or condition.",
+      "phrases": ["sentiment for which disease", "opinion about the condition", "perception by indication"]
+    },
+    "sentimentScore": {
+      "means": "The number (0 to 1) that says how positive a sentiment assertion is. A plain value.",
+      "phrases": ["how positive", "sentiment score", "rating value", "average sentiment", "score of the opinion"]
+    },
+    "mentionsBrand": {
+      "means": "A document or passage names a brand.",
+      "phrases": ["documents that talk about the brand", "which reports mention the brand", "passages naming the brand", "where is the brand discussed", "how many documents mention"]
+    },
+    "mentionsDrug": {
+      "means": "A document or passage names a drug.",
+      "phrases": ["documents that talk about the drug", "which reports mention the drug", "passages naming the drug"]
+    },
+    "mentionsDrugClass": {
+      "means": "A passage names a drug class.",
+      "phrases": ["passages about the drug class", "where is the class of drugs discussed"]
+    },
+    "mentionsIndication": {
+      "means": "A document or passage names a disease or condition.",
+      "phrases": ["documents about the disease", "which reports discuss the condition", "passages naming the indication"]
+    },
+    "coversGeography": {
+      "means": "A document or passage is about a country or region.",
+      "phrases": ["which countries does the document cover", "where was the survey run", "region covered by the report", "market of the document"]
+    },
+    "isChunkOf": {
+      "means": "A passage (chunk) comes from one document.",
+      "phrases": ["which document is this passage from", "source document of the excerpt", "where does this snippet come from"]
+    },
+    "documentTitle": {
+      "means": "The title of a document. A plain value.",
+      "phrases": ["title of the document", "name of the report", "what is the report called"]
+    },
+    "study_type": {
+      "means": "The kind of research a document is (for example survey, interview, landscape). A plain value.",
+      "phrases": ["type of study", "kind of research", "is it a survey or an interview", "study format"]
+    },
+    "quality_score": {
+      "means": "How good the document is judged to be by the ingestion checks. A plain value.",
+      "phrases": ["document quality", "how reliable is the report", "quality score of the document"]
+    },
+    "containsDocument": {
+      "means": "A knowledge space holds a document.",
+      "phrases": ["which documents are in the knowledge space", "what does the space hold", "documents available to a team"]
+    },
+    "spaceName": {
+      "means": "The name of a knowledge space. A plain value.",
+      "phrases": ["name of the knowledge space", "which knowledge spaces exist", "what are the spaces called"]
+    },
+    "partOfRegion": {
+      "means": "A country belongs to a larger region (for example a country in the EU).",
+      "phrases": ["which region is the country in", "belongs to which region", "part of the region"]
+    },
+    "subIndicationOf": {
+      "means": "A disease is a narrower form of a broader disease.",
+      "phrases": ["subtype of the disease", "narrower condition", "specific form of", "parent disease"]
+    }
+  },
+  "kinds": {
+    "Brand": {"means": "A product sold under a trade name.", "phrases": ["brand", "product", "trade name", "marketed product"]},
+    "Drug": {"means": "The active ingredient inside a brand.", "phrases": ["drug", "active ingredient", "molecule", "compound", "generic"]},
+    "DrugClass": {"means": "A group of drugs that work in the same way.", "phrases": ["drug class", "class of drugs", "mechanism class", "type of drug"]},
+    "Indication": {"means": "A disease or condition a brand is aimed at.", "phrases": ["indication", "disease", "condition", "illness", "diagnosis"]},
+    "TherapeuticArea": {"means": "An area of medicine.", "phrases": ["therapeutic area", "area of medicine", "specialty", "medical field"]},
+    "Geography": {"means": "A country or a region.", "phrases": ["country", "region", "market", "geography", "territory"]},
+    "MarketResearchDocument": {"means": "A report, survey or interview summary that was ingested.", "phrases": ["document", "report", "study", "survey", "interview summary"]},
+    "DocumentChunk": {"means": "A short passage cut from a document.", "phrases": ["passage", "excerpt", "snippet", "chunk"]},
+    "SentimentAssertion": {"means": "One recorded opinion with a score.", "phrases": ["opinion", "sentiment", "perception", "rating"]},
+    "KnowledgeSpace": {"means": "A collection of documents scoped to a team or area.", "phrases": ["knowledge space", "document collection", "workspace"]}
+  },
+  "notes_for_reviewer": [
+    "'medicine' is used both for a brand (what a patient buys) and for a drug (the ingredient). It is listed under containsDrug only; decide whether that is right.",
+    "'competitor' is taken to mean competesWithin (compared in a competitive landscape document). 'mentioned together' is coMentionedWith (same passage). These are different things in the data; check the wording separates them.",
+    "'region' is listed under Geography. EU and APAC are Geography entries too, linked from countries by partOfRegion.",
+    "'HCP' means healthcare professional; the sentiment entries cover how HCPs view a brand.",
+    "Left out on purpose: bookkeeping relations (lineage, review, index ids, access labels). Questions are not asked about those through the graph.",
+    "No synonyms were added for brand or drug NAMES. Those come from the data catalog."
+  ]
+}

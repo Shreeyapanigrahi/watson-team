@@ -4,7 +4,7 @@ What the prototype does and does not do. The "Gap" column is deliberate honesty 
 
 | Area | What we have | Gap / what production would need |
 |---|---|---|
-| Authentication | Pick one of four users, receive an opaque bearer token held in server memory | No passwords, no expiry, tokens lost on restart. Use SSO (OIDC) and short-lived signed tokens |
+| Authentication | One account per role. Username and password (min 10 characters), stored as salted scrypt hashes in `credentials.json`; 5 wrong passwords lock a username for 5 minutes (unknown names are throttled the same way, and a wrong name and a wrong password give the same answer); opaque bearer token with an 8-hour expiry; logout ends it; password change ends the user's other sessions; sign-ins, failures and changes are audited (an unknown username and passwords are never logged) | No HTTPS (passwords cross the network in clear text), no MFA, no SSO, no self-service reset; sessions and lockout counters are in memory (lost on restart); anyone who can lock a username by guessing can lock that user out for 5 minutes; anyone with disk access can run `set_password`. Production: SSO (OIDC), TLS, MFA, short-lived signed tokens |
 | Authorisation | ABAC checked on every read and action, server-side; UI hiding is cosmetic only | Policy is in code; a policy engine would allow changes without redeploy |
 | Audit | Every ingest, check, decision and denial written to `audit_log.jsonl` | The file is editable by anyone with disk access. Production: append-only store with hash chaining or write-once storage |
 | Data at rest | Plain JSON and original files on local disk | Unencrypted. Production: encrypted storage, access limited by the OS |

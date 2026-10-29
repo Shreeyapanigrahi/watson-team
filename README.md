@@ -50,10 +50,16 @@ python -m venv .venv
 # 3. Tests
 .venv\Scripts\python -m pytest layer1/tests -q -p no:cacheprovider -c layer1/pytest.ini --rootdir=.
 
-# 4. UI (once), then the app on http://127.0.0.1:8000
+# 4. Passwords (once, and on every new machine): asks for each role's password, typed hidden, at least 10 characters
+.venv\Scripts\python -m layer1.set_password
+
+# 5. UI (once), then the app on http://127.0.0.1:8000
 cd frontend; npm install; npm run build; cd ..
 .venv\Scripts\python -m uvicorn layer1.api.main:app --port 8000
 ```
+
+Until step 4 has been run nobody can sign in (the login screen says so). The passwords are stored only as salted hashes in `layer1/stores/credentials.json`,
+which is git-ignored and is not touched by `bulk_ingest --reset`. To change one account later: `.venv\Scripts\python -m layer1.set_password admin`, or use **Account** in the app.
 
 Layer 2 (needs `.venv\Scripts\python -m pip install -r layer2\requirements.txt` once; the first embedding run downloads a ~90 MB model, then it is cached):
 
@@ -83,16 +89,18 @@ New approvals made in the UI are enriched automatically.
 For UI development run `npm run dev` in `frontend/` (port 5173, proxies `/api` to port 8000).
 `layer1/requirements.lock.txt` has the exact versions used.
 
-Log in by choosing one of four demo users (no passwords, prototype only):
+Sign in with a username and the password you set in step 4. There is one account per role:
 
-| User | Role | Sees |
-|---|---|---|
-| Vera Hoffmann | VIEWER | up to INTERNAL, Oncology, EU |
-| Arjun Mehta | ANALYST | up to RESTRICTED, Oncology + Cardiology, EU/US/APAC |
-| Lena Okafor | SPOC | all levels; can review Oncology documents |
-| Marcus Webb | ADMIN | everything; archive, reinstate, expiry scan, audit log |
+| Username | Person | Role | Sees |
+|---|---|---|---|
+| `viewer` | Vera Hoffmann | VIEWER | up to INTERNAL, Oncology, EU |
+| `analyst` | Arjun Mehta | ANALYST | up to RESTRICTED, Oncology + Cardiology, EU/US/APAC |
+| `spoc` | Lena Okafor | SPOC | all levels; can review Oncology documents |
+| `admin` | Marcus Webb | ADMIN | everything; archive, reinstate, expiry scan, audit log |
 
-Try: upload a file as Arjun, review it as Marcus, then log in as Vera and check whether she can see it.
+Five wrong passwords lock that username for 5 minutes; a session lasts 8 hours; sign-ins, failures, sign-outs and password changes are in the audit log (admin).
+
+Try: upload a file as `analyst`, review it as `admin`, then sign in as `viewer` and check whether Vera can see it.
 Layer 2 demo: open **Knowledge space** as Marcus (everything) and again as Vera (only what she may read, and fewer nodes); open an entity such as Opdivra
 to see its catalog columns, DOID and sentiment; open **Data catalog > Mappings into Watson**; as Marcus run **Graph health > Run validation** and **SPARQL queries** Q3, Q6, Q10.
 
@@ -127,6 +135,6 @@ Evidence: the one planted PII file is caught, and the other 46 documents, which 
   Answer lines from the 3B model can be terse ("Tagrisa: 0.78"). The hallucination check is heuristic (words, meaning, numbers, names), not a proof. Plain vs semantic RAG was compared on a few questions only.
   The MCP tools are stubs, not a server. The Ask screen has not been opened in a browser; the streaming endpoint has been exercised with a scripted model, and the real model through the pipeline.
 - **Classifier accuracy (about 0.96-0.98)** was measured on synthetic documents whose titles carry the cues. Do not quote it as real-world accuracy.
-- **Login is not real authentication.** Pick-a-user and an in-memory token. Fine for a demo, not for production.
+- **Sign-in is basic, not production authentication.** Username and password per role (salted scrypt hashes, lockout, 8-hour sessions), but no HTTPS, no MFA, no SSO, no self-service reset, and sessions and lockout counters live in server memory (a restart signs everyone out). Anyone who can run `set_password` on the machine can reset any account. Verified by tests over the API; the login and Account screens have not been opened in a browser.
 - **UI:** compiled and served, but no one has clicked through it in a browser yet (Layers 1 and 2). The graph screen in particular needs a look.
 - Brief section 4.10's four validation checks were mapped to SHACL shapes from our reading of photographed pages; please compare with the brief.

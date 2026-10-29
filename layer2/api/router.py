@@ -124,8 +124,18 @@ def build_router(current_user) -> APIRouter:
 
     @r.get("/graph")
     def graph(mode: str = Query("knowledge", pattern="^(knowledge|reference|entity)$"), space: Optional[str] = None,
-              entity: Optional[str] = None, limit: int = Query(80, ge=1, le=200), user=Depends(current_user)):
-        return graph_view.graph(user, mode, space, entity, limit)
+              entity: Optional[str] = None, limit: int = Query(80, ge=1, le=200),
+              documents: Optional[str] = None, brand: Optional[str] = None, indication: Optional[str] = None, drug: Optional[str] = None,
+              area: Optional[str] = None, geography: Optional[str] = None, relation: Optional[str] = None, user=Depends(current_user)):
+        """Filters are comma-separated ids ("Brand_opdivra,Brand_keytrava"); values of one filter are alternatives, different filters all apply."""
+        given = {"documents": documents, "brand": brand, "indication": indication, "drug": drug, "area": area, "geography": geography,
+                 "relation": relation}
+        filters = {k: [x.strip() for x in v.split(",")] for k, v in given.items() if v}
+        return graph_view.graph(user, mode, space, entity, limit, filters)
+
+    @r.get("/graph/filters")
+    def graph_filters(space: Optional[str] = None, user=Depends(current_user)):
+        return graph_view.graph_filters(user, space)
 
     @r.get("/spaces")
     def spaces(user=Depends(current_user)):
@@ -135,6 +145,10 @@ def build_router(current_user) -> APIRouter:
     @r.get("/documents/{uri}/knowledge")
     def document_knowledge(uri: str, user=Depends(current_user)):
         return graph_view.document_knowledge(user, uri)
+
+    @r.get("/documents/{uri}/facts")
+    def document_facts(uri: str, user=Depends(current_user)):
+        return graph_view.document_facts(user, uri)
 
     @r.post("/documents/{uri}/enrich")
     def enrich(uri: str, user=Depends(current_user)):

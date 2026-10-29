@@ -23,7 +23,7 @@ from layer1 import lifecycle_manager as lifecycle
 from layer2 import config as l2config, embedder, graph_view, kg as kgmod, ontology_view, catalog_view, vector_index
 from layer2.kg import W, local, short, uri
 
-from . import config
+from . import config, sparql_gen
 
 ENTITY_PROPS = (W.mentionsBrand, W.mentionsDrug, W.mentionsIndication, W.mentionsDrugClass, W.coversGeography)
 STOP = set("the a an of in on for to and or is are was were be what which who how many much do does did with by from at as it its this that "
@@ -103,6 +103,16 @@ def _prop_label(name: str) -> str:
     return str(lab) if lab is not None else re.sub(r"(?<!^)(?=[A-Z])", " ", name.split(":", 1)[1]).replace("_", " ").lower()
 
 
+def _kind_plural(var: str | None) -> str | None:
+    """'?drug' -> 'drugs', from the ontology's own label of the class the variable stands for."""
+    cls = sparql_gen.TYPED_VARS.get(var or "")
+    if not cls:
+        return None
+    lab = kgmod.get().ontology().value(W[cls], RDFS.label)
+    name = str(lab).lower() if lab is not None else re.sub(r"(?<!^)(?=[A-Z])", " ", cls).lower()
+    return name[:-1] + "ies" if name.endswith("y") else name + ("es" if name.endswith(("s", "x", "ch", "sh")) else "s")
+
+
 def sentence_for(sl, plan: dict | None, row: dict) -> str:
     """One result row as a plain statement, built from the plan's own edges: 'Opdivra co-mentioned with Trodelvia'.
     Edges whose ends are not in the row are skipped; aggregate columns are appended as 'average: 0.78'."""
@@ -129,7 +139,7 @@ def sentence_for(sl, plan: dict | None, row: dict) -> str:
         if a is not None and b is not None and a != b:
             parts.append(f"{a} {_prop_label(e['p'])} {b}")
     selected = [c["var"] for c in plan.get("select") or [] if c.get("agg") in (None, "none")]
-    metrics = []
+    metrics, counted = [], []
     for c in plan.get("select") or []:
         key = c["var"].lstrip("?")
         if c.get("agg") in (None, "none") or row.get(key) is None:
@@ -137,9 +147,19 @@ def sentence_for(sl, plan: dict | None, row: dict) -> str:
         of_edge = next((e for e in plan.get("edges") or [] if e.get("o") == c.get("of")), None)
         over = _prop_label(of_edge["p"]) if of_edge else "value"                # what is being counted or averaged
         if c["agg"].startswith("count"):
-            over = {"?document": "documents", "?brand": "brands", "?chunk": "passages"}.get(c.get("of"), over)
+            over = _kind_plural(c.get("of")) or over
+            counted.append((c, over, row[key]))
         word = "" if c["agg"].startswith("count") else {"avg": "average ", "sum": "total ", "min": "lowest ", "max": "highest "}[c["agg"]]
         metrics.append(f"{word}{over}: {_humanise(g, row[key])}")
+    if len(counted) == 1 and len(metrics) == 1 and not selected:                # a single number: say what it counts and over what
+        c, over, n = counted[0]
+        edges = [e for e in plan.get("edges") or [] if e["p"] != "rdfs:label"]
+        about = "".join(f" ({val(e['s'])} {_prop_label(e['p'])})" if e["o"] == c.get("of") and str(e["s"]).startswith("Watson:")
+                        else f" ({_prop_label(e['p'])} {val(e['o'])})" for e in edges
+                        if c.get("of") in (e["s"], e["o"]) and str(e["s"] if e["o"] == c.get("of") else e["o"]).startswith("Watson:"))
+        through_documents = any(sparql_gen.TYPED_VARS.get(t) in sparql_gen.COUNT_SCOPE for e in edges for t in (e["s"], e["o"]))
+        scope = " in the documents you may read" if through_documents and sparql_gen.TYPED_VARS.get(c.get("of")) not in sparql_gen.COUNT_SCOPE else ""
+        return f"Number of distinct {over}{scope}{about}: {_humanise(g, n)}"
     subject = [t for t in (val(v) for v in selected) if t and not any(t in p for p in parts)]
     if parts:
         return "; ".join(dict.fromkeys(parts + metrics))
@@ -253,8 +273,10 @@ def catalog_facts(user: dict, sl, question: str, entities: list, start_id: int) 
         add(f"The data catalog '{s['catalog']}' (version {s['version']}) holds {c.get('domains')} domains, {c.get('tables')} tables, "
             f"{c.get('columns')} columns and {c.get('foreign_keys', c.get('fks', 'n/a'))} foreign keys.", f"Data catalog {s['version']}")
     if re.search(r"entit|brand|drug|indication|countr|geograph|ground|mapp|how many", q):
-        by = Counter(e["kind"] for e in graph_view.entities(user))
-        add("Entities in the knowledge space by kind: " + ", ".join(f"{n} {k}" for k, n in sorted(by.items())) + ".", "Entity list (your view)", "catalog")
+        ents = graph_view.entities(user)
+        by, seen = Counter(e["kind"] for e in ents), Counter(e["kind"] for e in ents if e["documents"])
+        add("Entities in the catalog by kind (the same list for every role): " + ", ".join(f"{n} {k}" for k, n in sorted(by.items()))
+            + ". Mentioned in the documents you may read: " + ", ".join(f"{n} {k}" for k, n in sorted(seen.items())) + ".", "Entity list", "catalog")
     for e in entities[:3]:
         try:
             d = graph_view.entity_detail(user, e["entity_id"])
@@ -295,13 +317,16 @@ def lineage(sl, evidence: list) -> list:
 
 
 def gather(user: dict, sl, question: str, entities: list, route: str, sparql_result: dict | None, mode: str) -> dict:
-    items, notes = [], []
+    items, notes, counted = [], [], False
     if mode == "semantic":                                   # plain RAG never sees the graph: that is the comparison
         items += graph_facts(sl, sparql_result)
-        if route == "knowledge_space":
+        # the graph answered a how-many with a number: on ANY route, the space and catalog sentences and the passages hold other numbers
+        # or unrelated text and only distract a small model (it answered "no answer" next to a correct 43 and five unrelated passages)
+        counted = bool(items and sparql_result.get("counted"))
+        if route == "knowledge_space" and not counted:
             items += catalog_facts(user, sl, question, entities, len(items) + 1)
     graph_items = [i for i in items if i["kind"] == "graph"]
-    if mode == "plain" or route != "knowledge_space" or not items:
+    if not counted and (mode == "plain" or route != "knowledge_space" or not items):
         try:
             items += chunk_evidence(user, sl, question, entities, graph_items, mode, len(items) + 1)
         except embedder.EmbeddingUnavailable as e:

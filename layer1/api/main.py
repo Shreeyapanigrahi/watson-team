@@ -3,12 +3,11 @@
 Run from the project root:
     .venv\\Scripts\\python -m uvicorn layer1.api.main:app --port 8000
 
-Authentication is deliberately minimal (prototype gap, see nfr_design.md): the user
-picks one of the four registry users and gets an opaque bearer token. What matters
-for Layer 1 is that every endpoint enforces the ABAC policy for that user.
+Authentication: each role has one account (username + password, see auth.py) and signing in returns an opaque bearer
+token that expires after 8 hours. What matters for Layer 1 is that every endpoint enforces the ABAC policy for the
+registry user behind that token.
 """
 import re
-import secrets
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -20,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .. import abac_engine as abac
-from .. import audit_log, catalog, config, expiry_manager, lifecycle_manager as lm, metadata_extractor as mx, vocab
+from .. import audit_log, auth, catalog, config, expiry_manager, lifecycle_manager as lm, metadata_extractor as mx, vocab
 from ..errors import (LifecycleViolationError, MetadataIncompleteError, NotFoundError, PIIBlockedError,
                       UnsupportedFormatError, WatsonAccessDeniedError)
 
@@ -28,7 +27,7 @@ app = FastAPI(title="Watson Layer 1 - Governed Ingestion")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
                    allow_methods=["*"], allow_headers=["*"])
 
-TOKENS: dict = {}
+TOKENS = auth.SESSIONS          # same dict: tests clear it between runs
 
 _STATUS = {LifecycleViolationError: 409, PIIBlockedError: 409, WatsonAccessDeniedError: 403,
            MetadataIncompleteError: 422, NotFoundError: 404, UnsupportedFormatError: 415, ValueError: 422}
@@ -44,31 +43,64 @@ for _t, _s in _STATUS.items():
     _register_handler(_t, _s)
 
 
+@app.exception_handler(auth.AuthError)
+async def _auth_error(_request, exc):
+    return JSONResponse(status_code=exc.status, content={"detail": str(exc), "code": "AuthError"})
+
+
 # ---------------------------------------------------------------- auth
-def current_user(authorization: Optional[str] = Header(None)) -> dict:
+def _bearer(authorization: Optional[str]) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Not signed in")
-    uid = TOKENS.get(authorization[7:])
-    if not uid:
+    return authorization[7:]
+
+
+def current_user(authorization: Optional[str] = Header(None)) -> dict:
+    user = auth.user_for_token(_bearer(authorization))
+    if not user:
         raise HTTPException(401, "Session expired; sign in again")
-    return abac.get_user(uid)
+    return user
 
 
 class LoginBody(BaseModel):
-    user_id: str
+    username: str
+    password: str
 
 
-@app.get("/api/users")
-def users():
-    return {"users": abac.list_users()}
+class PasswordBody(BaseModel):
+    current_password: str
+    new_password: str
 
 
 @app.post("/api/login")
 def login(body: LoginBody):
-    user = abac.get_user(body.user_id)
-    token = secrets.token_urlsafe(24)
-    TOKENS[token] = user["user_id"]
-    return {"token": token, "user": user}
+    # the username is logged only when it is a real account: a mistyped password in this field must never reach the log
+    known = body.username.strip().lower() in auth.usernames()
+    shown = {"username": body.username.strip().lower()} if known else {"username": None}
+    try:
+        token, user = auth.sign_in(body.username, body.password)
+    except auth.AuthError as e:
+        audit_log.log_event("LOGIN_FAILED", None, {**shown, "reason": str(e)})
+        raise
+    audit_log.log_event("LOGIN", None, {"user_id": user["user_id"], "role": user["role"]})
+    return {"token": token, "user": user, "expires_in": auth.SESSION_SECONDS}
+
+
+@app.post("/api/logout")
+def logout(authorization: Optional[str] = Header(None)):
+    token = _bearer(authorization)
+    user = auth.user_for_token(token)
+    auth.sign_out(token)
+    if user:
+        audit_log.log_event("LOGOUT", None, {"user_id": user["user_id"]})
+    return {"signed_out": True}
+
+
+@app.post("/api/me/password")
+def change_password(body: PasswordBody, authorization: Optional[str] = Header(None), user=Depends(current_user)):
+    auth.change_password(user, body.current_password, body.new_password, keep_token=_bearer(authorization))
+    audit_log.log_event("PASSWORD_CHANGED", None, {"user_id": user["user_id"], "by": "the user"})
+    return {"changed": True, "other_sessions_ended": True}
 
 
 @app.get("/api/me")

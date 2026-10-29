@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from layer1 import audit_log
+
 from .. import history, llm, mcp_tools, pipeline
 
 log = logging.getLogger("watson.layer3")
@@ -54,6 +56,20 @@ def build_router(current_user) -> APIRouter:
     @r.get("/history")
     def runs(user=Depends(current_user)):
         return {"runs": history.recent(user)}
+
+    @r.delete("/history/{run_id}")
+    def delete_run(run_id: str, user=Depends(current_user)):
+        if not history.delete(user, run_id):
+            raise HTTPException(404, "No such question in your history.")      # also the answer for another user's entry
+        audit_log.log_event("HISTORY_DELETED", None, {"user_id": user["user_id"], "role": user["role"], "count": 1})
+        return {"deleted": 1}
+
+    @r.delete("/history")
+    def clear_history(user=Depends(current_user)):
+        n = history.delete(user)
+        if n:
+            audit_log.log_event("HISTORY_DELETED", None, {"user_id": user["user_id"], "role": user["role"], "count": n})
+        return {"deleted": n}
 
     @r.get("/tools")
     def tools(user=Depends(current_user)):

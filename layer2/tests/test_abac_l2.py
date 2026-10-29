@@ -46,6 +46,83 @@ def test_graph_hides_documents_and_does_not_leak_through_derived_edges(docs):
     assert [e for e in analyst["edges"] if e["label"] == "coMentionedWith"]
 
 
+def _doc_ids(g):
+    return {n["id"] for n in g["nodes"] if n["kind"] == "Document"}
+
+
+def test_graph_filters_narrow_the_readable_documents_and_never_widen_them(docs):
+    a, b, c = docs
+    viewer, analyst = U("u_viewer"), U("u_analyst")
+    # Keytrava appears only in the restricted landscape document B: the analyst gets it, the viewer gets an empty graph (and no error)
+    assert graph_view.graph(viewer, "knowledge", filters={"brand": ["Brand_keytrava"]})["nodes"] == []
+    g = graph_view.graph(analyst, "knowledge", filters={"brand": ["Brand_keytrava"]})
+    assert _doc_ids(g) == {b} and any(n["id"] == "Brand_keytrava" and n.get("matched") for n in g["nodes"])
+    assert graph_view.graph(viewer, "knowledge", filters={"documents": [b]})["nodes"] == []            # naming an unreadable document reveals nothing
+    # values of one filter are alternatives; different filters must all hold
+    either = graph_view.graph(analyst, "knowledge", filters={"brand": ["Brand_keytrava", "Brand_jardiva"]})
+    assert _doc_ids(either) == {b, c}
+    assert graph_view.graph(analyst, "knowledge", filters={"brand": ["Brand_keytrava"], "area": ["TA_cardiology"]})["nodes"] == []
+    assert _doc_ids(graph_view.graph(analyst, "knowledge", filters={"brand": ["Brand_jardiva"], "area": ["TA_cardiology"]})) == {c}
+    assert _doc_ids(graph_view.graph(analyst, "knowledge", filters={"documents": [a]})) == {a}
+    # the filter is applied before the limit, so the limit cannot hide a match
+    assert _doc_ids(graph_view.graph(analyst, "knowledge", limit=1, filters={"brand": ["Brand_jardiva"]})) == {c}
+    stats = graph_view.graph(analyst, "knowledge", limit=1, filters={"area": ["TA_oncology"]})["stats"]
+    assert stats["documents_matching"] == 2 and stats["limited"] and stats["documents_shown"] == 1
+
+
+def test_a_geography_found_only_in_passages_still_matches_and_is_drawn(docs):
+    a, b, c = docs
+    g = graph_view.graph(U("u_viewer"), "knowledge", filters={"geography": ["Geo_DE"]})            # Germany is in A's passages, not in its document-level links
+    assert _doc_ids(g) == {a}
+    assert next(n for n in g["nodes"] if n["id"] == "Geo_DE").get("matched")
+    assert any(e["source"] == a and e["target"] == "Geo_DE" and e["label"] == "coversGeography" for e in g["edges"])
+
+
+def test_the_relationship_filter_keeps_only_those_edges_and_the_nodes_they_join(docs):
+    r = graph_view.graph(U("u_analyst"), "knowledge", filters={"relation": ["mentionsBrand"]})
+    assert r["edges"] and {e["label"] for e in r["edges"]} == {"mentionsBrand"}
+    touched = {x for e in r["edges"] for x in (e["source"], e["target"])}
+    assert {n["id"] for n in r["nodes"]} == touched                                              # no node left without a relationship
+    assert not any(n["kind"] == "KnowledgeSpace" for n in r["nodes"])
+
+
+def test_a_filter_with_an_unknown_or_wrong_kind_of_id_is_refused(docs):
+    for bad in ({"brand": ["Geo_DE"]}, {"geography": ["Nope"]}, {"colour": ["red"]}):
+        with pytest.raises(ValueError):
+            graph_view.graph(U("u_admin"), "knowledge", filters=bad)
+    assert graph_view.graph(U("u_admin"), "reference", filters={"brand": ["Geo_DE"]})["nodes"]        # filters only apply to the knowledge view
+
+
+def test_filter_options_offer_only_what_the_reader_can_read(docs):
+    a, b, c = docs
+    viewer, analyst = graph_view.graph_filters(U("u_viewer")), graph_view.graph_filters(U("u_analyst"))
+    assert [d["id"] for d in viewer["documents"]] == [a] and {d["id"] for d in analyst["documents"]} == {a, b, c}
+    brands = lambda f: {x["id"]: x["documents"] for x in f["brand"]}
+    assert "Brand_keytrava" not in brands(viewer) and brands(analyst)["Brand_keytrava"] == 1 and brands(viewer)["Brand_opdivra"] == 1
+    assert [x["id"] for x in viewer["area"]] == ["TA_oncology"] and {x["id"] for x in analyst["area"]} >= {"TA_oncology", "TA_cardiology"}
+    assert "Geo_DE" in {x["id"] for x in viewer["geography"]}                                   # from the passages
+    assert "coMentionedWith" not in {x["name"] for x in viewer["relation"]} and "coMentionedWith" in {x["name"] for x in analyst["relation"]}
+    only_cardio = graph_view.graph_filters(U("u_analyst"), "Space_cardiology")
+    assert [d["id"] for d in only_cardio["documents"]] == [c]
+
+
+def test_document_facts_are_this_documents_statements_and_follow_access(docs):
+    a, b, c = docs
+    with pytest.raises(WatsonAccessDeniedError):
+        graph_view.document_facts(U("u_viewer"), b)
+    assert audit_log.read_events(b, "ABAC_DENIED")
+    f = graph_view.document_facts(U("u_viewer"), a)
+    rows = {(x["subject"]["id"], x["relation"], x["object"]["id"]): x for x in f["facts"]}
+    assert (a, "mentionsBrand", "Brand_opdivra") in rows and rows[(a, "mentionsBrand", "Brand_opdivra")]["passages"] > 0
+    germany = rows[(a, "coversGeography", "Geo_DE")]
+    assert germany["source"] == "passages" and germany["passages"] > 0                          # a passage-level fact says how many passages
+    assert any(x["source"] == "catalog" and x["relation"] == "containsDrug" for x in f["facts"])
+    assert all(x["subject"]["id"] == a or x["source"] != "document" for x in f["facts"])        # document-level facts are about this document only
+    assert f["counts"]["passages"] > 0 and f["sentiment"] and f["sentiment"][0]["average_score"] is not None
+    landscape = graph_view.document_facts(U("u_analyst"), b)
+    assert any(x["relation"] == "coMentionedWith" and "Brand_keytrava" in (x["subject"]["id"], x["object"]["id"]) for x in landscape["facts"])
+
+
 def test_entity_pages_count_and_list_only_readable_documents(docs):
     a, b, c = docs
     viewer = graph_view.entity_detail(U("u_viewer"), "Brand_keytrava")

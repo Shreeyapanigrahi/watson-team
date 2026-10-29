@@ -11,7 +11,7 @@ export default function Catalog() {
           <h1>Data catalog</h1>
           <p>
             What Watson knows about its documents: the metadata fields, where each one comes from, and the entities found in active
-            documents. Layer 2 builds the ontology from this catalog, so every class and property traces back to something listed here.
+            documents. The ontology is built from this catalog, so every class and property traces back to something listed here.
             Filtered to what your role may see.
           </p>
         </div>

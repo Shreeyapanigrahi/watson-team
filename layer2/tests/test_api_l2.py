@@ -2,16 +2,20 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from layer1 import auth
 from layer1.api import main as api_main
 
 
 @pytest.fixture()
 def client(world):
+    auth.reset_state()
     return TestClient(api_main.app)
 
 
 def login(client, user_id):
-    r = client.post("/api/login", json={"user_id": user_id})
+    name = auth.username_for(user_id)
+    auth.set_password(name, "correct horse battery")
+    r = client.post("/api/login", json={"username": name, "password": "correct horse battery"})
     assert r.status_code == 200
     return {"Authorization": "Bearer " + r.json()["token"]}
 
@@ -64,6 +68,25 @@ def test_entities_graph_and_spaces_follow_the_user(client, docs):
     assert client.get("/api/l2/graph", params={"mode": "bogus"}, headers=viewer).status_code == 422
     sp = {s["id"]: s for s in client.get("/api/l2/spaces", headers=viewer).json()["spaces"]}
     assert sp["Space_oncology"]["documents"] == 1
+
+
+def test_graph_filters_and_document_facts_over_http(client, docs):
+    a, b = docs
+    for path in ("/api/l2/graph/filters", f"/api/l2/documents/{a}/facts"):
+        assert client.get(path).status_code == 401, path
+    viewer, analyst = login(client, "u_viewer"), login(client, "u_analyst")
+    nodes = lambda r: {n["id"] for n in r.json()["nodes"]}
+    g = client.get("/api/l2/graph", params={"mode": "knowledge", "brand": "Brand_keytrava,Brand_opdivra"}, headers=analyst)
+    assert {a, b} <= nodes(g)                                                          # comma-separated values are alternatives
+    assert nodes(client.get("/api/l2/graph", params={"brand": "Brand_keytrava"}, headers=viewer)) == set()
+    assert nodes(client.get("/api/l2/graph", params={"geography": "Geo_DE", "area": "TA_oncology"}, headers=viewer)) >= {a, "Geo_DE"}
+    assert client.get("/api/l2/graph", params={"brand": "Geo_DE"}, headers=viewer).status_code == 422
+    f = client.get("/api/l2/graph/filters", headers=viewer).json()
+    assert [d["id"] for d in f["documents"]] == [a] and "Brand_keytrava" not in {x["id"] for x in f["brand"]}
+    assert {"brand", "indication", "drug", "area", "geography", "relation"} <= set(f)
+    assert client.get(f"/api/l2/documents/{b}/facts", headers=viewer).status_code == 403
+    facts = client.get(f"/api/l2/documents/{a}/facts", headers=viewer).json()
+    assert facts["enriched"] and facts["facts"] and facts["counts"]["passages"] > 0
 
 
 def test_document_knowledge_tab(client, docs):

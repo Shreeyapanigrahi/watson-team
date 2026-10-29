@@ -21,7 +21,7 @@ export default function Evidence() {
           <Notice tone="warn" title="Limits of this evidence">
             Retrieval used {data.retrieval}. Six queries and {data.documents_indexed} documents is a small sample, and the differences are
             a few queries wide. We ran four corpus lengths (see results/) and the winner held, but this should be re-run with embeddings
-            in Layer 2.
+            in a later step.
           </Notice>
           <div className="card card-flush">
             <div className="table-wrap">

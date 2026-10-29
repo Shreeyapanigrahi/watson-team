@@ -166,13 +166,64 @@ def entity_detail(user: dict, entity_id: str) -> dict:
             "co_mentioned_brands": [{"id": i, "label": _label(m, i), "chunks": n} for i, n in co.most_common()]}
 
 
+# ---------------------------------------------------------------- filters on the graph
+# Filter keys the UI and API use, and the kind of entity each one picks. "area" is the therapeutic area; "geography" is a country or region.
+FILTER_KINDS = {"brand": "Brand", "indication": "Indication", "drug": "Drug", "area": "TherapeuticArea", "geography": "Geography"}
+# A document links to some entities directly (DOC_LINKS) and to more through its passages (a document covers 3 regions, its passages
+# cover the countries too). Filters and per-document facts use both, so "Germany" finds the documents whose text is about Germany.
+CHUNK_LINKS = (W.mentionsBrand, W.mentionsIndication, W.mentionsDrug, W.mentionsDrugClass, W.coversGeography)
+
+
+def _doc_links(g, dn) -> dict:
+    """{entity id: {relation name: {"document": linked from the document itself, "passages": number of its passages that link}}}.
+    The caller holds the graph lock."""
+    out = defaultdict(dict)
+
+    def slot(o, prop):
+        return out[local(o)].setdefault(str(prop).split("#")[1], {"document": False, "passages": 0})
+    for prop in DOC_LINKS.values():
+        for o in g.objects(dn, prop):
+            slot(o, prop)["document"] = True
+    for c in g.subjects(W.isChunkOf, dn):
+        for prop in CHUNK_LINKS:
+            for o in g.objects(c, prop):
+                slot(o, prop)["passages"] += 1
+    return out
+
+
+def clean_filters(filters: Optional[dict], m: dict) -> dict:
+    """Keep the filters that are set. Entity ids must exist and be of the kind the filter is for (ValueError, which the API
+    answers with 422); a document id that is not readable simply matches nothing, so nothing is revealed about it."""
+    out = {}
+    for key, values in (filters or {}).items():
+        values = [v for v in dict.fromkeys(values or []) if v]
+        if not values:
+            continue
+        if key in FILTER_KINDS:
+            for v in values:
+                if v not in m or m[v][0] != FILTER_KINDS[key]:
+                    raise ValueError(f"'{v}' is not a {FILTER_KINDS[key]} (filter '{key}')")
+        elif key not in ("documents", "relation"):
+            raise ValueError(f"Unknown filter '{key}'")
+        out[key] = values
+    return out
+
+
 # ---------------------------------------------------------------- graph for the UI
-def graph(user: dict, mode: str = "knowledge", space: Optional[str] = None, entity: Optional[str] = None, limit: int = 80) -> dict:
+def graph(user: dict, mode: str = "knowledge", space: Optional[str] = None, entity: Optional[str] = None, limit: int = 80,
+          filters: Optional[dict] = None) -> dict:
     """Nodes and edges for Cytoscape. mode: knowledge (spaces, documents, the entities they mention),
-    reference (the catalog's entities and how they relate), entity (one entity and its neighbours)."""
+    reference (the catalog's entities and how they relate), entity (one entity and its neighbours).
+
+    `filters` (knowledge mode only): {"documents": [uri], "brand"|"indication"|"drug"|"area"|"geography": [entity id], "relation": [name]}.
+    Values of one filter are alternatives (brand A OR brand B); different filters all have to hold (brand A AND area X). The entity and
+    document filters choose which readable documents are drawn (before the limit); the relation filter then keeps only edges of those
+    relationship names. The filter never widens what the user may read: it only narrows the readable documents."""
     cat, kg = load(), kgmod.get()
     m = _instance_map(cat)
     records = visible_records(user)
+    flt = clean_filters(filters, m) if mode == "knowledge" else {}
+    picked = {v for k in FILTER_KINDS if k in flt for v in flt[k]}                  # the entities the user asked for: drawn with emphasis
     nodes, edges = {}, {}
 
     def node(nid, label, kind, **data):
@@ -183,7 +234,7 @@ def graph(user: dict, mode: str = "knowledge", space: Optional[str] = None, enti
 
     def entity_node(eid):
         k, e = m[eid]
-        node(eid, e["label"], k, grounded=len(e.get("attributes", {})))
+        node(eid, e["label"], k, grounded=len(e.get("attributes", {})), **({"matched": True} if eid in picked else {}))
 
     def structure(eid):
         for r in _related(cat, eid)["outgoing"]:
@@ -212,8 +263,18 @@ def graph(user: dict, mode: str = "knowledge", space: Optional[str] = None, enti
                          study_type=rec["metadata"].get("study_type"), sensitivity=rec["access"]["sensitivity_level"])
                     edge(d, entity, "mentions")
     else:
-        chosen = [d for d in sorted(records) if not space or short(uri(space)) in
-                  {short(s) for s in kg.g.objects(uri(d), W.isInSpace)}][:limit]
+        candidates = [d for d in sorted(records) if not space or short(uri(space)) in
+                      {short(s) for s in kg.g.objects(uri(d), W.isInSpace)}]
+        links = {}
+        if flt:                                           # the filters choose the documents; the limit comes after, so it cannot hide a match
+            with kg.lock:
+                for d in candidates:
+                    links[d] = _doc_links(kg.g, uri(d))
+            wanted_docs = set(flt.get("documents", []))
+            candidates = [d for d in candidates
+                          if (not wanted_docs or d in wanted_docs)
+                          and all(any(e in links[d] for e in flt[k]) for k in FILTER_KINDS if k in flt)]
+        chosen = candidates[:limit]
         with kg.lock:
             g = kg.g
             for sid in {s["id"] for s in cat.knowledge_spaces}:
@@ -245,8 +306,101 @@ def graph(user: dict, mode: str = "knowledge", space: Optional[str] = None, enti
             for (a, b), n in co.items():
                 if a in nodes and b in nodes:
                     edge(a, b, "coMentionedWith")
-    return {"mode": mode, "nodes": list(nodes.values()), "edges": list(edges.values()),
-            "stats": {"nodes": len(nodes), "edges": len(edges), "documents_shown": sum(1 for n in nodes.values() if n["kind"] == "Document")}}
+            for d in chosen:                    # an entity the user picked is drawn with its link to each matching document, whatever level it comes from
+                for eid in picked & set(links.get(d, {})):
+                    entity_node(eid)
+                    for rel in links[d][eid]:
+                        edge(d, eid, rel)
+    if flt.get("relation"):                     # keep only the chosen relationship names, and the nodes they still join
+        keep = set(flt["relation"])
+        edges = {k: e for k, e in edges.items() if e["label"] in keep}
+        touched = {x for e in edges.values() for x in (e["source"], e["target"])}
+        nodes = {k: n for k, n in nodes.items() if k in touched}
+    out = {"mode": mode, "nodes": list(nodes.values()), "edges": list(edges.values()),
+           "stats": {"nodes": len(nodes), "edges": len(edges), "documents_shown": sum(1 for n in nodes.values() if n["kind"] == "Document")}}
+    if mode == "knowledge":
+        out["stats"].update(documents_matching=len(candidates), limited=len(candidates) > limit, filters=sorted(flt))
+    return out
+
+
+def graph_filters(user: dict, space: Optional[str] = None) -> dict:
+    """What the filters can offer THIS user: only documents they may read, and only entities that at least one of those documents links
+    to (directly or through a passage), each with its number of readable documents, so a value is never offered because of a document the
+    user cannot read. Relationship names come from the graph as drawn for them."""
+    cat, kg = load(), kgmod.get()
+    m = _instance_map(cat)
+    records = visible_records(user)
+    docs, counts = [], {k: Counter() for k in FILTER_KINDS}
+    by_kind = {kind: key for key, kind in FILTER_KINDS.items()}
+    with kg.lock:
+        g = kg.g
+        for d in sorted(records):
+            dn = uri(d)
+            in_spaces = [local(s) for s in g.objects(dn, W.isInSpace)]
+            if space and local(uri(space)) not in in_spaces:
+                continue
+            links = _doc_links(g, dn)
+            rec = records[d]
+            docs.append({"id": d, "title": rec["metadata"].get("extracted_title"), "study_type": rec["metadata"].get("study_type"),
+                         "spaces": in_spaces, "entities": sum(1 for e in links if e in m)})
+            for eid in links:
+                if eid in m and m[eid][0] in by_kind:
+                    counts[by_kind[m[eid][0]]][eid] += 1
+    out = {"documents": docs}
+    for key, c in counts.items():
+        out[key] = sorted(({"id": eid, "label": m[eid][1]["label"], "documents": n} for eid, n in c.items()), key=lambda x: x["label"].lower())
+    labels = Counter(e["label"] for e in graph(user, "knowledge", space, limit=200)["edges"])
+    out["relation"] = [{"name": n, "edges": c} for n, c in sorted(labels.items())]
+    return out
+
+
+def document_facts(user: dict, document_uri: str) -> dict:
+    """One readable document's facts as statements (subject, relationship, object), with where each comes from: the document itself,
+    its passages (with how many), the catalog (reference relations of the things it mentions), plus its sentiment records.
+    Everything is read from this document only; a document the user may not read is refused and logged."""
+    rec = require_readable(user, document_uri)
+    cat, kg = load(), kgmod.get()
+    m = _instance_map(cat)
+    dn = uri(document_uri)
+    title = rec["metadata"].get("extracted_title") or document_uri
+    facts, sentiment = [], []
+
+    def ent(eid):
+        return {"id": eid, "label": _label(m, eid), "kind": m[eid][0] if eid in m else None}
+    with kg.lock:
+        g = kg.g
+        if (dn, W.lifecycleState, None) not in g:
+            return {"document_uri": document_uri, "title": title, "enriched": False, "facts": [], "sentiment": [], "counts": {}}
+        links = _doc_links(g, dn)
+        doc = {"id": document_uri, "label": title, "kind": "Document"}
+        for eid, rels in sorted(links.items(), key=lambda kv: (m[kv[0]][0] if kv[0] in m else "", _label(m, kv[0]))):
+            if eid not in m:
+                continue
+            for rel, how in sorted(rels.items()):
+                facts.append({"subject": doc, "relation": rel, "object": ent(eid),
+                              "source": "document" if how["document"] else "passages", "passages": how["passages"]})
+        co, chunk_ids = Counter(), []
+        for c in g.subjects(W.isChunkOf, dn):
+            chunk_ids.append(c)
+            co.update(combinations(sorted(local(o) for o in g.objects(c, W.mentionsBrand) if local(o) in m), 2))
+        for (a, b), n in sorted(co.items()):
+            facts.append({"subject": ent(a), "relation": "coMentionedWith", "object": ent(b), "source": "passages", "passages": n})
+        for eid in sorted(links):                                    # reference relations of the things this document is about
+            if eid in m and m[eid][0] in ("Brand", "Drug", "Indication", "DrugClass"):
+                for r in _related(cat, eid)["outgoing"]:
+                    facts.append({"subject": ent(eid), "relation": r["relation"], "object": ent(r["id"]), "source": "catalog", "passages": 0})
+        grouped = defaultdict(list)
+        chunk_set = set(chunk_ids)
+        for s in g.subjects(RDF.type, W.SentimentAssertion):
+            if g.value(s, W.derivedFrom) in chunk_set:
+                grouped[(local(g.value(s, W.forBrand)), local(g.value(s, W.forGeography)), local(g.value(s, W.forIndication)))].append(
+                    float(g.value(s, W.sentimentScore)))
+        for (b, geo, ind), scores in sorted(grouped.items()):
+            sentiment.append({"brand": ent(b), "geography": ent(geo), "indication": ent(ind), "assertions": len(scores),
+                              "average_score": round(sum(scores) / len(scores), 3)})
+    seen = {(f["subject"]["id"], f["relation"], f["object"]["id"], f["source"]) for f in facts}
+    return {"document_uri": document_uri, "title": title, "enriched": True, "facts": facts, "sentiment": sentiment,
+            "counts": {"entities": sum(1 for e in links if e in m), "facts": len(seen), "passages": len(chunk_ids), "sentiment_groups": len(sentiment)}}
 
 
 # ---------------------------------------------------------------- knowledge spaces

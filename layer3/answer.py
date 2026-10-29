@@ -31,7 +31,7 @@ def build_prompt(question: str, evidence: list) -> str:
 def parse(text: str) -> dict:
     short, lines = None, []
     for ln in (x.strip() for x in text.replace("\r", "").split("\n")):
-        ln = re.sub(r"^[-*•\d.)\s]+(?=[A-Z\[])", "", ln)
+        ln = re.sub(r"^(?:[-*•]+\s*|\d+[.)]\s+)+(?=[A-Z\[])", "", ln)               # list markers only: a leading '15' or '2023' is part of the sentence
         if not ln:
             continue
         m = re.match(r"^\**SHORT\**\s*[:\-]\s*(.*)$", ln, re.I)
@@ -43,11 +43,20 @@ def parse(text: str) -> dict:
     return {"short": short, "sentences": sentences, "refused": bool(NO_ANSWER.search(text)) and len(sentences) <= 1}
 
 
+def _states(parsed: dict, number: str) -> bool:
+    """The reply gives the number inside a statement that has words of its own. A bare '15 [E1]' does not count: the checker
+    compares a statement with its cited evidence by its words, so it drops a number alone and nothing would be left to show."""
+    bodies = (guard.TAG.sub("", s) for s in [parsed["short"] or "", *parsed["sentences"]])
+    return any(re.search(rf"(?<![\d.]){number}(?![\d.])", b) and guard.content_words(b) for b in bodies)
+
+
 def generate(question: str, evidence: list) -> dict:
     """{mode: llm|extractive, raw, short, sentences, refused, model info}."""
     if not evidence:
         return {"mode": "none", "raw": "", "short": None, "sentences": [], "refused": True, "note": "No evidence was found."}
-    prompt, retried = build_prompt(question, evidence), False
+    prompt, retried, fallback = build_prompt(question, evidence), False, None
+    counts = [(e["id"], re.sub(r"\.0+$", "", str(e["row"]["count"])), e["text"]) for e in evidence
+              if e["kind"] == "graph" and isinstance(e.get("row"), dict) and list(e["row"]) == ["count"]]       # a database count for this question
     try:
         out = llm.chat(SYSTEM, prompt, max_tokens=420)
         parsed = parse(out["text"])
@@ -56,13 +65,19 @@ def generate(question: str, evidence: list) -> dict:
             # The model says there is no answer although a database query returned rows for this very question. Say so and ask again, once.
             retried = True
             nudge = (f"\n\nNote: evidence lines {graph_ids[0]} to {graph_ids[-1]} are the result of a database query for this question. "
-                     "Turn each of them into one sentence that says what it measures, ending with its tag.")
+                     + ("It is the database's count for exactly this question: state its number, ending with its tag." if counts
+                        else "Turn each of them into one sentence that says what it measures, ending with its tag."))
             out = llm.chat(SYSTEM, prompt + nudge, max_tokens=420)
             parsed = parse(out["text"])
+        if counts and not any(_states(parsed, n) for _, n, _ in counts):
+            # a count whose number the model did not state in a sentence (it said "no answer", described the line, or wrote only "15 [E1]"): quote the evidence line itself
+            cid, _, text = counts[0]
+            parsed = parse(f"SHORT: {text} [{cid}]\n{text} [{cid}]")
+            fallback = "The model did not state the number in a sentence, so the evidence line is quoted as the answer."
     except llm.LLMUnavailable as e:
         return {**extractive(question, evidence), "note": f"LLM unavailable: {e}"}
     return {"mode": "llm", "raw": out["text"], "model": out["model"], "seconds": out["seconds"], "retried": retried,
-            "prompt_tokens": out["prompt_tokens"], "output_tokens": out["output_tokens"], **parsed}
+            "prompt_tokens": out["prompt_tokens"], "output_tokens": out["output_tokens"], **parsed, **({"note": fallback} if fallback else {})}
 
 
 def extractive(question: str, evidence: list, n: int = 3) -> dict:
