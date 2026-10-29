@@ -35,6 +35,8 @@ Seeded state after `bulk_ingest --reset`: 47 files, 42 ACTIVE, 3 UNDER_REVIEW, 2
 
 ## Run it
 
+Setting it up on a new device? Follow the step-by-step guide in `SETUP.md`. The commands below are the short version.
+
 Tested on Windows 11, Python 3.13.12, Node 24. Run from the project root.
 
 ```powershell
