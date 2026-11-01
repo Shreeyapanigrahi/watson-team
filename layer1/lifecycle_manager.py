@@ -140,6 +140,17 @@ def register_state_hook(fn) -> None:
 
 def clear_state_hooks() -> None:
     _STATE_HOOKS.clear()
+    _DELETE_HOOKS.clear()
+
+
+# Listeners called when a document is being deleted, BEFORE anything of it is removed here: hook(document_uri). Layer 2 removes the
+# document's graph facts and vectors. A hook that raises stops the delete with nothing removed, so it can simply be retried.
+_DELETE_HOOKS: list = []
+
+
+def register_delete_hook(fn) -> None:
+    if fn not in _DELETE_HOOKS:
+        _DELETE_HOOKS.append(fn)
 
 
 def assert_indexable(uri: str) -> None:
@@ -329,6 +340,51 @@ def reinstate(uri: str, user_id: str, notes: Optional[str] = None) -> dict:
     user = abac.get_user(user_id)
     abac.authorize(user, "reinstate", get_record(uri))
     return transition(uri, "ACTIVE", user_id, notes or "reinstated")
+
+
+def _inside(path: Path, folder: Path) -> bool:
+    try:
+        path.resolve().relative_to(folder.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def delete_document(uri: str, user_id: str) -> dict:
+    """Permanently delete a document, in any state. Admin only. It cannot be undone.
+
+    Removed: what Layer 2 holds for it (graph facts, vectors, enrichment status; via the delete hooks, first), the parsed text, the
+    uploaded file (only when it is inside the uploads folder: a file from the supplied corpus is never touched), its duplicate-check
+    entry (so the same file can be uploaded again), and the lifecycle record. Kept: the audit log, which gets one DOCUMENT_DELETED line
+    with what the document was and who deleted it. The document number is never reused (the counter only goes up)."""
+    user = abac.get_user(user_id)
+    rec = get_record(uri)
+    abac.authorize(user, "delete", rec)
+    for hook in list(_DELETE_HOOKS):
+        hook(uri)
+    removed = {"staged_text": False, "uploaded_file": False}
+    staged = staging_path(uri)
+    if staged.exists():
+        staged.unlink()
+        removed["staged_text"] = True
+    stored = Path(rec["stored_path"]) if rec.get("stored_path") else None
+    if stored and _inside(stored, config.UPLOAD_DIR) and stored.is_file():
+        stored.unlink()
+        removed["uploaded_file"] = True
+        folder = stored.parent
+        if folder.resolve() != config.UPLOAD_DIR.resolve() and not any(folder.iterdir()):
+            folder.rmdir()
+    sha256 = dedup_detector.unregister(uri)
+    with LOCK:
+        store = _load()
+        store["documents"].pop(uri, None)
+        _save(store)
+    meta = rec.get("metadata") or {}
+    audit_log.log_event("DOCUMENT_DELETED", uri, {
+        "actor": user_id, "state": rec["state"], "title": meta.get("extracted_title"), "source_filename": rec["source_filename"],
+        "uploaded_by": rec["uploaded_by"], "sensitivity_level": (rec.get("access") or {}).get("sensitivity_level"),
+        "sha256": sha256, "removed": removed})
+    return {"document_uri": uri, "deleted": True, "removed": removed}
 
 
 # ---------------------------------------------------------------- CLI

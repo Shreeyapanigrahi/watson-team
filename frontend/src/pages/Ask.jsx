@@ -5,7 +5,7 @@ import { useAuth } from '../auth'
 import { Badge, ErrorBox, Notice, SensitivityBadge, useAsync } from '../ui'
 
 export const STEP_TITLES = {
-  1: 'Question received', 2: 'Access check', 3: 'Entities and route', 4: 'SPARQL by the local LLM',
+  1: 'Question received', 2: 'Access check', 3: 'Entities, route and search path', 4: 'SPARQL by the local LLM',
   5: 'Entity mapping', 6: 'Evidence and lineage', 7: 'Answer by the local LLM', 8: 'Hallucination check',
 }
 const TONE = { done: 'ok', warn: 'warn', error: 'bad', skipped: 'muted', running: 'info' }
@@ -38,12 +38,12 @@ function Table({ columns, rows }) {
 function summary(ev) {
   const d = ev.data || {}
   switch (ev.key) {
-    case 'question': return `${d.user?.user} (${d.user?.role}) · mode ${d.mode} · model ${d.llm?.model}${d.llm?.available ? '' : ' (NOT available)'}`
+    case 'question': return `${d.user?.user} (${d.user?.role}) · search chosen from the question · model ${d.llm?.model}${d.llm?.available ? '' : ' (NOT available)'}`
     case 'access': return ev.status === 'running' ? 'Cutting out every document you may not read...' : `${d.documents_readable} readable, ${d.documents_withheld} withheld · graph ${d.triples_before} → ${d.triples_after} triples`
-    case 'understand': return `${d.entities?.length || 0} entities · route: ${d.route}${d.terms?.available ? ` · ${(d.terms.relations_selected?.length || 0) + (d.terms.kinds_selected?.length || 0)} term(s) matched by meaning` : ''}`
+    case 'understand': return `${d.entities?.length || 0} entities · ${d.search?.label || 'search'} · route: ${d.route}${d.terms?.available ? ` · ${(d.terms.relations_selected?.length || 0) + (d.terms.kinds_selected?.length || 0)} term(s) matched by meaning` : ''}`
     case 'sparql': return ev.status === 'running' ? 'The model is writing the query...' : ev.status === 'skipped' || d.status === 'no_relation' ? d.reason : `${d.status} · ${d.row_count ?? 0} rows · ${d.attempts?.length || 0} attempt(s)`
     case 'mapping': return ev.status === 'skipped' ? d.reason : `${d.mapped?.length || 0} mapped · ${d.query_path?.length || 0} hop(s) in the query path${d.query_entities_not_in_question?.length ? ` · ${d.query_entities_not_in_question.length} extra in query` : ''}`
-    case 'evidence': return ev.status === 'running' ? 'Searching your passages and tracing lineage...' : `${d.items?.length || 0} evidence items · ${d.lineage?.length || 0} documents traced`
+    case 'evidence': return ev.status === 'running' ? 'Searching your passages and tracing lineage...' : `${d.items?.filter((i) => i.kind !== 'chunk').length || 0} graph fact(s) + ${d.items?.filter((i) => i.kind === 'chunk').length || 0} passage(s) · ${d.lineage?.length || 0} documents traced`
     case 'answer': return ev.status === 'running' ? 'The model is writing from the evidence...' : `${d.mode}${d.seconds ? ` · ${d.seconds}s` : ''}${d.output_tokens ? ` · ${d.output_tokens} tokens` : ''}`
     case 'verify': return `${d.counts?.supported || 0} supported · ${d.counts?.weak || 0} weak · ${d.counts?.unsupported || 0} removed · risk ${d.risk}`
     default: return ''
@@ -100,7 +100,13 @@ function StepBody({ ev }) {
           <div className="row">
             {d.entities?.length ? d.entities.map((e) => <Badge key={e.entity_id} tone="info" title={`${e.method}, confidence ${e.confidence}`}>{e.text} → {e.label} ({e.kind})</Badge>) : <span className="muted">No catalog entity named.</span>}
           </div>
-          <div><Badge tone="ok">{d.route}</Badge></div>
+          {d.search && (
+            <div className="stack" style={{ gap: 4 }}>
+              <div className="row"><b>Planned search path</b><Badge tone="ok">{d.search.label}</Badge><span className="muted small">{d.search.chosen_by === 'router' ? 'chosen from your question; step 6 shows what was actually used' : 'chosen manually'}</span></div>
+              <ul className="plain-list">{d.search.reasons?.map((r) => <li key={r}>{d.search.chosen_by === 'router' ? `Your question ${r}` : r}</li>)}</ul>
+            </div>
+          )}
+          <div className="row"><b>Evidence route</b><Badge tone="neutral">{d.route}</Badge></div>
           <ul className="plain-list">{d.reasons?.map((r) => <li key={r}>{r}</li>)}</ul>
           {d.terms && <Terms t={d.terms} />}
         </div>
@@ -231,7 +237,7 @@ function Recent({ runs, loading, error, onPick, disabled, me, onDelete, onClear,
               <span className="recent-q">{r.question}</span>
               <span className="row small muted">
                 <Badge tone={RUN_TONE[r.status] || 'neutral'}>{String(r.status).replace(/_/g, ' ')}</Badge>
-                <span>{r.mode === 'plain' ? 'plain' : 'semantic'}</span>
+                <span>{(r.path || (r.mode === 'plain' ? 'vector search only' : 'semantic search (graph + vector)')).replace('graph + vector search', 'semantic search (graph + vector)')}</span>
                 {r.sparql && <span>SPARQL {r.sparql}</span>}
                 <span>{r.seconds}s</span>
                 <span>{new Date(r.time).toLocaleString()}</span>
@@ -272,7 +278,7 @@ function Answer({ r }) {
       <div className="row">
         <h2 style={{ margin: 0 }}>Answer</h2>
         <Badge tone={r.status === 'answered' ? 'ok' : 'warn'}>{r.status.replace(/_/g, ' ')}</Badge>
-        <Badge tone="neutral">{r.mode === 'plain' ? 'plain RAG' : 'semantic RAG'}</Badge>
+        <Badge tone="neutral" title={`Planned: ${r.search?.label || r.mode}. ${(r.search?.reasons || []).join('; ')}${r.evidence_path ? ` Used: ${r.evidence_path.graph_facts} graph fact(s), ${r.evidence_path.passages} passage(s).` : ''}`}>{r.evidence_path?.label || (r.mode === 'plain' ? 'vector search only' : 'semantic search (graph + vector)')}</Badge>
         <Badge tone={r.risk === 'low' ? 'ok' : r.risk === 'none' ? 'neutral' : 'warn'}>hallucination risk: {r.risk}</Badge>
         <span className="muted small">{(r.timings_ms.total / 1000).toFixed(1)}s</span>
       </div>
@@ -314,35 +320,9 @@ function Answer({ r }) {
   )
 }
 
-export function Compare({ plain, semantic }) {
-  const col = (title, run) => {
-    const r = run?.final
-    const docs = r ? [...new Set(r.sources.flatMap((s) => s.documents))] : []
-    return (
-      <div className="card stack">
-        <h3 style={{ margin: 0 }}>{title}</h3>
-        {!r ? <span className="muted">{run?.busy ? 'Running...' : 'Not run'}</span> : (
-          <>
-            <div className="row"><Badge tone={r.status === 'answered' ? 'ok' : 'warn'}>{r.status.replace(/_/g, ' ')}</Badge><span className="muted small">{(r.timings_ms.total / 1000).toFixed(1)}s · risk {r.risk}</span></div>
-            {r.lines.length ? r.lines.map((l, i) => <p key={i}>{l.text} {l.cites.map((c) => <span key={c} className="cite">{c}</span>)}</p>)
-              : <p>{r.short_answer ? r.short_answer.text : <span className="muted">No supported answer.</span>}</p>}
-            <ul className="plain-list small">
-              <li>{r.lines.length} supported lines, {r.removed.length} removed</li>
-              <li>Cited documents: {docs.length ? docs.join(', ') : 'none'}</li>
-              <li>Graph used: {r.sparql ? `yes (SPARQL ${r.sparql.status})` : 'no'}</li>
-            </ul>
-          </>
-        )}
-      </div>
-    )
-  }
-  return <div className="two-col">{col('Plain RAG (vector search only)', plain)}{col('Semantic RAG (graph + vectors)', semantic)}</div>
-}
-
 export default function Ask() {
   const [question, setQuestion] = useState('')
-  const [mode, setMode] = useState('semantic')
-  const [runs, setRuns] = useState({})
+  const [run, setRun] = useState(null)
   const [error, setError] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
   const { user } = useAuth()
@@ -350,42 +330,29 @@ export default function Ask() {
   const { data: status } = useAsync(() => api.l3Status(), [])
   const { data: hist, error: histError, loading: histLoading, reload: reloadHistory } = useAsync(() => api.l3History(), [])
 
-  const runOne = async (m, q) => {
-    setRuns((r) => ({ ...r, [m]: { steps: {}, final: null, busy: true, question: q } }))
-    await api.l3Ask(q, m, (ev) => {
-      setRuns((r) => {
-        const cur = r[m] || { steps: {} }
-        if (ev.step === 'final') return { ...r, [m]: { ...cur, final: ev.result, busy: false } }
-        if (ev.step === 'error') return { ...r, [m]: { ...cur, busy: false, failure: ev.message } }
-        return { ...r, [m]: { ...cur, steps: { ...cur.steps, [ev.step]: ev } } }
-      })
-    }, abort.current?.signal)
-    setRuns((r) => ({ ...r, [m]: { ...r[m], busy: false } }))
-  }
-
+  // The question chooses its own search: the pipeline's router decides between the graph (with vectors) and vector search alone (step 3).
   const submit = async (e) => {
     e?.preventDefault()
     const q = question.trim()
     if (!q) return
     setError(null)
     abort.current = new AbortController()
-    setRuns({})
+    setRun({ steps: {}, final: null, busy: true, question: q })
     try {
-      if (mode === 'compare') {
-        await runOne('plain', q)
-        await runOne('semantic', q)
-      } else {
-        await runOne(mode, q)
-      }
+      await api.l3Ask(q, 'auto', (ev) => {
+        setRun((cur) => {
+          if (ev.step === 'final') return { ...cur, final: ev.result, busy: false }
+          if (ev.step === 'error') return { ...cur, busy: false, failure: ev.message }
+          return { ...cur, steps: { ...cur.steps, [ev.step]: ev } }
+        })
+      }, abort.current.signal)
     } catch (err) {
       if (err.name !== 'AbortError') setError(err)
     }
+    setRun((cur) => ({ ...cur, busy: false }))
     reloadHistory()
   }
-  const pick = (r) => {
-    setQuestion(r.question)
-    if (['semantic', 'plain'].includes(r.mode)) setMode(r.mode)
-  }
+  const pick = (r) => setQuestion(r.question)
   const removeFromHistory = async (fn) => {
     setDeleteError(null)
     try {
@@ -399,9 +366,7 @@ export default function Ask() {
   const onClear = () => {
     if (window.confirm('Delete all of your own recent questions? Other users\' questions are not touched. This cannot be undone.')) removeFromHistory(() => api.l3ClearHistory())
   }
-  const busy = Object.values(runs).some((r) => r.busy)
-  const shown = mode === 'compare' ? 'semantic' : mode
-  const run = runs[shown]
+  const busy = !!run?.busy
   const llmDown = status && !status.llm.available
 
   return (
@@ -418,12 +383,6 @@ export default function Ask() {
         <div className="row">
           <button className="btn btn-primary" disabled={busy || !question.trim()} type="submit">{busy ? 'Working...' : 'Ask'}</button>
           {busy && <button type="button" className="btn" onClick={() => abort.current?.abort()}>Stop</button>}
-          <fieldset className="mode-set" disabled={busy}>
-            <legend className="sr-only">Retrieval mode</legend>
-            {[['semantic', 'Semantic RAG'], ['plain', 'Plain RAG'], ['compare', 'Compare both']].map(([v, l]) => (
-              <label key={v}><input type="radio" name="mode" value={v} checked={mode === v} onChange={() => setMode(v)} /> {l}</label>
-            ))}
-          </fieldset>
           {status?.llm && <span className="muted small">model: <span className="mono">{status.llm.model}</span></span>}
         </div>
       </form>
@@ -433,13 +392,12 @@ export default function Ask() {
         <>
           <div className="stack">
             <h2>What happened, step by step</h2>
-            <p className="muted small">Question: “{run.question}”{mode === 'compare' ? ' · showing the semantic run; the plain run is in the comparison below' : ''}</p>
+            <p className="muted small">Question: “{run.question}”. Step 3 shows which search the question was sent through, and why.</p>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <Step key={n} n={n} ev={run.steps[n]} />)}
           </div>
           {run.final && <Answer r={run.final} />}
         </>
       )}
-      {mode === 'compare' && (runs.plain || runs.semantic) && <Compare plain={runs.plain} semantic={runs.semantic} />}
     </div>
     <Recent runs={hist?.runs} loading={histLoading} error={histError} onPick={pick} disabled={busy} me={user.user_id} onDelete={onDelete} onClear={onClear} deleteError={deleteError} />
     </div>

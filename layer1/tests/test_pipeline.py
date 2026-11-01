@@ -236,3 +236,38 @@ def test_quality_scores_vary_across_the_corpus(env, corpus, manifest):
         rec = lm.ingest(corpus / name, ingest_timestamp=(datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds"))
         scores.append(approve(rec["document_uri"])["quality"]["quality_score"])
     assert max(scores) - min(scores) > 0.15                 # not clustered around one value
+
+
+# ------------------------------------------------------------------ delete
+def test_delete_runs_the_hooks_first_and_a_failing_hook_removes_nothing(env, corpus):
+    rec = lm.ingest(corpus / "study_001.pdf")
+    uri = rec["document_uri"]
+    seen = []
+
+    def spy(doc_uri):
+        seen.append((doc_uri, lm.get_state(uri), lm.staging_path(uri).exists()))      # the document is still whole when the hook runs
+
+    def broken(doc_uri):
+        raise RuntimeError("graph store is locked")
+    lm.clear_state_hooks()
+    lm.register_delete_hook(spy)
+    lm.register_delete_hook(broken)
+    with pytest.raises(RuntimeError):
+        lm.delete_document(uri, "u_admin")
+    assert seen == [(uri, "UNDER_REVIEW", True)]
+    assert lm.get_state(uri) == "UNDER_REVIEW" and lm.staging_path(uri).exists() and not audit_log.read_events(uri, "DOCUMENT_DELETED")
+    lm.clear_state_hooks()                                                             # retry once the cause is fixed
+    assert lm.delete_document(uri, "u_admin")["deleted"] and lm.get_state(uri) is None
+
+
+def test_delete_never_touches_a_file_outside_the_uploads_folder_and_is_admin_only(env, corpus):
+    rec = lm.ingest(corpus / "study_001.pdf")               # ingested from the corpus folder, not uploaded through the UI
+    uri = rec["document_uri"]
+    for who in ("u_viewer", "u_analyst", "u_spoc"):
+        with pytest.raises(WatsonAccessDeniedError):
+            lm.delete_document(uri, who)
+    assert lm.get_state(uri) == "UNDER_REVIEW"
+    out = lm.delete_document(uri, "u_admin")
+    assert out["removed"] == {"staged_text": True, "uploaded_file": False}
+    assert (corpus / "study_001.pdf").is_file() and lm.get_state(uri) is None
+    assert uri not in {d["document_uri"] for d in lm.list_documents()}

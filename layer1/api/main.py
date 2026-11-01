@@ -16,6 +16,7 @@ from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, Upload
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel
 
 from .. import abac_engine as abac
@@ -271,6 +272,14 @@ def reinstate(uri: str, body: NoteBody = NoteBody(), user=Depends(current_user))
     return _detail(rec, "full")
 
 
+@app.delete("/api/documents/{uri}")
+def delete_document(uri: str, user=Depends(current_user)):
+    """Permanent, admin only (see lifecycle_manager.delete_document). The audit log keeps one DOCUMENT_DELETED line."""
+    out = lm.delete_document(uri, user["user_id"])
+    _snapshot()
+    return out
+
+
 # ---------------------------------------------------------------- expiry, audit, catalog, stats
 @app.get("/api/expiry/upcoming")
 def expiry_upcoming(days: int = Query(90, ge=0, le=3650), user=Depends(current_user)):
@@ -354,6 +363,23 @@ def _install_layer2_hooks():
 
 # Serve the built React app when present (single-command run). During development
 # the Vite dev server proxies /api to this process instead.
+class UiFiles(StaticFiles):
+    """The built React app. index.html is sent with `Cache-Control: no-cache`, so a normal reload always picks up a new build (without it the
+    browser may keep an old index.html, and with it the old script, for a long time). An address that is not a file (/knowledge, /documents/...)
+    gets index.html, so the page can be reloaded on any screen; /api paths and missing files (a script with an old name) stay 404."""
+
+    async def get_response(self, path, scope):
+        try:
+            response = await super().get_response(path, scope)
+        except StarletteHTTPException as e:            # the one StaticFiles raises (FastAPI's HTTPException is a subclass of it, not the same)
+            if e.status_code != 404 or path.startswith("api") or "." in path.rsplit("/", 1)[-1]:
+                raise
+            response = await super().get_response("index.html", scope)
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 _dist = config.ROOT.parent / "frontend" / "dist"
 if _dist.exists():
-    app.mount("/", StaticFiles(directory=_dist, html=True), name="ui")
+    app.mount("/", UiFiles(directory=_dist, html=True), name="ui")

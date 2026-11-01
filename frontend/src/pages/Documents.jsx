@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import DeleteDocument from '../DeleteDocument'
 import { Empty, ErrorBox, Loading, SensitivityBadge, StateBadge, Tabs, fmtDate, useAsync } from '../ui'
 
 const STATES = ['ALL', 'ACTIVE', 'UNDER_REVIEW', 'REJECTED', 'ARCHIVED']
 
 export default function Documents() {
   const nav = useNavigate()
-  const { user } = useAuth()
+  const { user, can } = useAuth()
   const [params, setParams] = useSearchParams()
   const state = params.get('state') || 'ALL'
   const [q, setQ] = useState('')
@@ -19,6 +20,10 @@ export default function Documents() {
   const all = useAsync(() => api.documents({ q }), [q])
   const counts = {}
   all.data?.documents.forEach((d) => (counts[d.state] = (counts[d.state] || 0) + 1))
+  const deleted = () => {
+    reload()
+    all.reload()
+  }
 
   return (
     <div className="stack">
@@ -54,7 +59,7 @@ export default function Documents() {
       {data && data.documents.length > 0 && (
         <div className="card card-flush">
           <div className="table-wrap">
-            <table>
+            <table className="table-tight">
               <thead>
                 <tr>
                   <th>Document</th>
@@ -65,6 +70,7 @@ export default function Documents() {
                   <th className="num">Quality</th>
                   <th>Expires</th>
                   <th>State</th>
+                  {can('delete') && <th className="sticky-end" aria-label="Delete" />}
                 </tr>
               </thead>
               <tbody>
@@ -88,6 +94,11 @@ export default function Documents() {
                     <td>
                       <StateBadge state={d.state} />
                     </td>
+                    {can('delete') && (
+                      <td className="sticky-end">
+                        <DeleteDocument uri={d.document_uri} onDeleted={deleted} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -29,7 +29,7 @@ export function RecentList() {
   const pick = (r) => {
     reset()
     navigate('/')
-    ask(r.question, ['semantic', 'plain'].includes(r.mode) ? r.mode : undefined)
+    ask(r.question)
   }
   const run = async (fn) => {
     setFailed(null)

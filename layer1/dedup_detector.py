@@ -92,5 +92,19 @@ def register(uri: str, sha256: str, source_filename: str, title, author, extract
         write_json(_store_path(), store)
 
 
+def unregister(uri: str) -> Optional[str]:
+    """Forget a deleted document: its hash and its entry, so the same file can be uploaded again and is not matched against a ghost.
+    Returns the SHA-256 of its text that was forgotten (None if it had no entry), for the audit line."""
+    with LOCK:
+        store = _load()
+        entry = store["documents"].pop(uri, None)
+        digests = [h for h, u in store["hashes"].items() if u == uri]
+        for digest in digests:
+            del store["hashes"][digest]
+        if entry is not None or digests:
+            write_json(_store_path(), store)
+        return (entry or {}).get("sha256") or (digests[0] if digests else None)
+
+
 if __name__ == "__main__":
     print(json.dumps(_load(), indent=2)[:2000])

@@ -20,7 +20,7 @@ log = logging.getLogger("watson.layer3")
 
 class AskBody(BaseModel):
     question: str
-    mode: str = "semantic"
+    mode: str = "auto"                                # the router chooses the search from the question; "semantic" or "plain" force one
 
 
 class ToolBody(BaseModel):

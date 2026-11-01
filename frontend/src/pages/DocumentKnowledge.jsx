@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import DocumentPosition from '../DocumentPosition'
 import { Badge, Empty, ErrorBox, KV, Loading, Notice, ScoreBar, fmtDate, fmtDateTime, useAsync } from '../ui'
 
 const METHOD_HELP = {
@@ -54,6 +55,7 @@ export default function DocumentKnowledge({ uri }) {
   return (
     <div className="stack">
       <ErrorBox error={err} />
+      <DocumentPosition uri={uri} onReady={k.reload} />
       <div className="card">
         <div className="row spread">
           <div>
@@ -67,7 +69,9 @@ export default function DocumentKnowledge({ uri }) {
       </div>
 
       {!d.enriched ? (
-        <Empty title="Nothing in the graph yet">Only approved documents are enriched. Once a reviewer approves this one, its entities, sentiment and lineage appear here.</Empty>
+        ['RUNNING', 'QUEUED'].includes(st?.state)
+          ? <Empty title="Being added to the graph">Enrichment is running. Its entities, sentiment and lineage appear here when it finishes.</Empty>
+          : <Empty title="Nothing in the graph yet">Only approved documents are enriched. Once a reviewer approves this one, its entities, sentiment and lineage appear here.</Empty>
       ) : (
         <>
           <div className="grid-2">

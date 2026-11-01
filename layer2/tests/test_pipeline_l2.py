@@ -141,6 +141,64 @@ def test_enriching_twice_gives_the_same_graph_apart_from_vector_ids(world, add_d
     assert first == second and vector_index.get().size() == len(lm.load_staging(u)["chunks"])
 
 
+# ---------------------------------------------------------------- deleting a document
+def test_deleting_a_document_removes_everything_layer_2_holds_for_it_and_only_for_it(world, add_doc):
+    a, b = add_doc("study_013.pptx"), add_doc("study_001.pdf")
+    g = graph()
+    a_chunks = {kgmod.short(x) for x in g.subjects(W.isChunkOf, uri(a))}
+    b_chunks = {kgmod.short(x) for x in g.subjects(W.isChunkOf, uri(b))}
+    assert a_chunks and b_chunks and (W.Brand_keytrava, W.competesWithin, W.Brand_opdivra) in g
+    assert pipeline.get_mentions(a) and pipeline.get_status(a)
+    out = lm.delete_document(a, "u_admin")
+    assert out["deleted"] and lm.get_state(a) is None
+    # nothing of A is left in the graph, as subject or as object, and the link only A supported is gone
+    gone = {uri(a), *[uri(c) for c in a_chunks]}
+    assert not [t for t in graph() if t[0] in gone or t[2] in gone]
+    assert (W.Brand_keytrava, W.competesWithin, W.Brand_opdivra) not in graph()
+    assert {kgmod.short(x) for x in graph().subjects(W.isChunkOf, uri(b))} == b_chunks         # B is untouched
+    # nothing of A in the vector index, the status store or the mentions store; B's are still there
+    assert set(vector_index.get().chunk_uris()) == b_chunks
+    assert pipeline.get_status(a) is None and pipeline.get_mentions(a) == [] and pipeline.get_status(b)["state"] == "COMPLETE" and pipeline.get_mentions(b)
+    assert len(events(a, "DOCUMENT_DELETED")) == 1
+    r = shacl_validator.run()
+    assert r["conforms"], r["violations"][:3]
+    assert r["index_binding"]["ok"] and r["index_binding"]["active_chunks"] == vector_index.get().size()
+
+
+def test_deleting_a_document_that_is_still_being_enriched_waits_for_the_worker_and_is_not_written_back(world, add_doc):
+    pipeline.set_sync(False)                                  # the real setting: enrichment runs on the background worker
+    a = add_doc("study_013.pptx")                             # approved, so a job is queued (or running) right now
+    lm.delete_document(a, "u_admin")                          # waits behind that job on the same worker
+    assert pipeline.wait_idle(60)
+    assert lm.get_state(a) is None and pipeline.get_status(a) is None
+    assert not [t for t in graph() if t[0] == uri(a) or t[2] == uri(a)] and vector_index.get().size() == 0
+    assert list(graph().subjects(RDF.type, W.DocumentChunk)) == []
+
+
+def test_deleting_an_archived_document_works_too(world, add_doc):
+    a, b = add_doc("study_013.pptx"), add_doc("study_001.pdf")
+    lm.archive(a, "u_admin")
+    lm.delete_document(a, "u_admin")
+    assert not [t for t in graph() if t[0] == uri(a) or t[2] == uri(a)] and lm.get_state(b) == "ACTIVE"
+    assert shacl_validator.run()["conforms"]
+
+
+def test_deleting_a_document_takes_it_out_of_the_provisional_entities(world):
+    from layer2 import entity_resolver as er
+    er._register("Brand", "Newbrandex", "Watson:Doc_001", "Watson:Chunk_001_000")
+    er._register("Brand", "Sharedbrandex", "Watson:Doc_001", "Watson:Chunk_001_001")
+    er._register("Brand", "Sharedbrandex", "Watson:Doc_002", "Watson:Chunk_002_000")
+    er._register("Brand", "Decidedbrandex", "Watson:Doc_001", "Watson:Chunk_001_002")
+    store = er.load_store()
+    store["entities"][er.provisional_id("Brand", "Decidedbrandex")]["status"] = "APPROVED"
+    er._save(store)
+    assert er.drop_document("Watson:Doc_001") == 1                                           # only the one nobody mentions any more
+    left = {e["label"]: e for e in er.list_provisional()}
+    assert set(left) == {"Sharedbrandex", "Decidedbrandex"}
+    assert left["Sharedbrandex"]["documents"] == ["Watson:Doc_002"] and left["Sharedbrandex"]["chunks"] == ["Watson:Chunk_002_000"]
+    assert left["Decidedbrandex"]["status"] == "APPROVED" and left["Decidedbrandex"]["documents"] == []     # a human decision stays
+
+
 # ---------------------------------------------------------------- failures: logged, document stays ACTIVE, stores stay consistent
 def _snapshot():
     return {"triples": set(graph()), "vectors": sorted(vector_index.get().chunk_uris())}

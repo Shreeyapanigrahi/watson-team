@@ -36,7 +36,7 @@ function RunAnswer({ run }) {
           {!r.lines.length && !r.short_answer && <p className="muted">Watson found no supported answer to this question in the documents you may read.</p>}
           <div className="row small muted">
             <Badge tone={r.status === 'answered' ? 'ok' : 'warn'}>{r.status.replace(/_/g, ' ')}</Badge>
-            <span>{r.mode === 'plain' ? 'plain RAG' : 'semantic RAG'}</span>
+            <span title={`Planned: ${r.search?.label || r.mode}. ${(r.search?.reasons || []).join('; ')}`}>{r.evidence_path?.label || (r.mode === 'plain' ? 'vector search only' : 'semantic search (graph + vector)')}</span>
             <span>hallucination risk: {r.risk}</span>
             <span>{(r.timings_ms.total / 1000).toFixed(1)}s</span>
           </div>
@@ -69,45 +69,24 @@ function RunAnswer({ run }) {
   )
 }
 
-// The complete answer is every checked line with its sources; Compare mode shows the plain and the semantic answer in full, one after the other.
+// The complete answer is every checked line with its sources. The question chooses its own search, so there is one run per question.
 function Reply({ turn }) {
-  const modes = turn.mode === 'compare' ? ['plain', 'semantic'] : [turn.mode]
   return (
     <div className="msg msg-bot">
       <span className="msg-avatar" aria-hidden="true">W</span>
       <div className="msg-body">
         {turn.error && <ErrorBox error={turn.error} />}
-        {modes.map((m) => turn.runs[m] && (
-          <div key={m} className="stack" style={{ gap: 10 }}>
-            {modes.length > 1 && <strong>{m === 'plain' ? 'Plain RAG' : 'Semantic RAG'}</strong>}
-            <RunAnswer run={turn.runs[m]} />
-          </div>
-        ))}
+        {turn.runs.auto && <RunAnswer run={turn.runs.auto} />}
       </div>
     </div>
   )
 }
 
-const MODES = [['semantic', 'Semantic RAG'], ['plain', 'Plain RAG'], ['compare', 'Compare both']]
-
 function Composer() {
-  const { ask, busy, stop, mode, setMode } = useChat()
+  const { ask, busy, stop } = useChat()
   const [text, setText] = useState('')
-  const [menu, setMenu] = useState(false)
   const field = useRef(null)
-  const box = useRef(null)
   const { data: status } = useAsync(() => api.l3Status(), [])
-
-  useEffect(() => {
-    const away = (e) => { if (menu && box.current && !box.current.contains(e.target)) setMenu(false) }
-    const esc = (e) => { if (e.key === 'Escape') setMenu(false) }
-    document.addEventListener('mousedown', away)
-    document.addEventListener('keydown', esc)
-    return () => {
-      document.removeEventListener('mousedown', away)
-      document.removeEventListener('keydown', esc)
-    }
-  }, [menu])
 
   const grow = () => {
     const el = field.current
@@ -135,18 +114,7 @@ function Composer() {
           onChange={(e) => { setText(e.target.value); grow() }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) send(e) }}
         />
-        <div className="chat-input-tools" ref={box}>
-          <button type="button" className="chat-tool" onClick={() => setMenu((m) => !m)} aria-haspopup="menu" aria-expanded={menu} aria-label="Answer settings" title="Answer settings" disabled={busy}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6" /></svg>
-          </button>
-          {menu && (
-            <fieldset className="chat-menu">
-              <legend>Retrieval mode</legend>
-              {MODES.map(([v, l]) => (
-                <label key={v}><input type="radio" name="chat-mode" value={v} checked={mode === v} onChange={() => { setMode(v); setMenu(false) }} /> {l}</label>
-              ))}
-            </fieldset>
-          )}
+        <div className="chat-input-tools">
           {busy ? (
             <button type="button" className="chat-send chat-stop" onClick={stop} aria-label="Stop" title="Stop">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>

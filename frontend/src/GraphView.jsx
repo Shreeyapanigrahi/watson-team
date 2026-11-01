@@ -30,8 +30,10 @@ export function Legend({ kinds }) {
   )
 }
 
-/** graph = { nodes: [{id,label,kind,...}], edges: [{id,source,target,label}] }. onSelect(node data | null). */
-export default function GraphView({ graph, onSelect, selected, height = 520, showEdgeLabels = false }) {
+/** graph = { nodes: [{id,label,kind,...}], edges: [{id,source,target,label}] }. onSelect(node data | null).
+ *  `labelWidth` is how wide a label may be before it is cut with "..."; `spread` scales the distance the layout keeps between nodes (1 = default).
+ *  A small picture that must stay readable uses a narrower label and a larger spread; every other graph keeps the defaults. */
+export default function GraphView({ graph, onSelect, selected, height = 520, showEdgeLabels = false, labelWidth = 90, spread = 1 }) {
   const box = useRef(null)
   const cy = useRef(null)
 
@@ -58,7 +60,7 @@ export default function GraphView({ graph, onSelect, selected, height = 520, sho
             'text-valign': 'bottom',
             'text-margin-y': 4,
             'text-wrap': 'ellipsis',
-            'text-max-width': 90,
+            'text-max-width': labelWidth,
             width: 22,
             height: 22,
             'background-color': '#5b6e75',
@@ -93,7 +95,10 @@ export default function GraphView({ graph, onSelect, selected, height = 520, sho
         { selector: '.faded', style: { opacity: 0.12 } },
         { selector: 'node:selected', style: { 'border-width': 3, 'border-color': css('--accent', '#0b6f6a') } },
       ],
-      layout: { name: 'cose', animate: false, nodeRepulsion: 9000, idealEdgeLength: 70, padding: 20, randomize: false, numIter: 800 },
+      layout: {
+        name: 'cose', animate: false, nodeRepulsion: 9000 * spread, idealEdgeLength: 70 * spread, padding: 20, randomize: false, numIter: 800,
+        ...(spread > 1 ? { nodeDimensionsIncludeLabels: true, nodeOverlap: 40, componentSpacing: 60 * spread } : {}),      // the readable picture: keep labels apart too
+      },
     })
     instance.on('tap', 'node', (evt) => {
       const n = evt.target

@@ -722,6 +722,88 @@ def test_plain_mode_never_touches_the_graph(docs, fake_llm):
     assert not any(c["schema"] for c in fake_llm.calls)                  # no plan was ever requested
 
 
+OPEN_QUESTIONS = ["What do physicians think about side effects of immunotherapy?",
+                  "Summarise the main concerns doctors raised in the surveys",
+                  "Tell me about prescribing barriers"]
+GRAPH_QUESTIONS = ["What does the survey say about Opdivra?",                 # names a catalog entity
+                   "how many documents are ingested ?",                        # a count, and no entity (the route label would say semantic_first)
+                   "Which brand has the highest sentiment?",                   # a ranking, no entity
+                   "What is the trend in sentiment over time?",                # a trend
+                   "Explain how the ontology is built"]                        # the platform's own structure
+
+
+def test_the_router_picks_the_search_from_the_question_alone(docs):
+    for q in OPEN_QUESTIONS:
+        s = understand.choose_search(q, understand.understand(q)["entities"])
+        assert s["mode"] == "plain" and s["chosen_by"] == "router" and s["label"] == "vector search only" and s["reasons"], q
+    for q in GRAPH_QUESTIONS:
+        s = understand.choose_search(q, understand.understand(q)["entities"])
+        assert s["mode"] == "semantic" and s["label"] == "semantic search (graph + vector)" and s["reasons"], q
+    # the doubtful case goes to the full path (the same vector search plus the graph's facts): "which" alone is enough to use the graph
+    q = "Which concerns did doctors raise?"
+    assert understand.choose_search(q, understand.understand(q)["entities"])["mode"] == "semantic"
+
+
+def test_auto_mode_sends_an_open_question_to_vector_search_only_and_says_why(docs, fake_llm):
+    fake_llm.answer = quote_evidence
+    events, res = run("u_viewer", "What do physicians think about side effects of immunotherapy?", mode="auto")
+    assert {e["key"]: e["status"] for e in events}["sparql"] == "skipped" and res["sparql"] is None
+    assert not any(c["schema"] for c in fake_llm.calls)                                  # no query was ever requested from the model
+    assert res["mode"] == "plain" and res["mode_requested"] == "auto" and res["search"]["chosen_by"] == "router"
+    assert last(events, "understand")["data"]["search"]["reasons"] == res["search"]["reasons"]            # step 3 shows the reasons
+    assert all(i["kind"] == "chunk" for i in last(events, "evidence")["data"]["items"])
+    q = [e for e in audit_log.read_events() if e["event_type"] == "QUERY" and e["details"].get("stage") == "layer3_answer"][-1]["details"]
+    assert q["mode"] == "plain" and q["mode_requested"] == "auto"                        # the audit line records both
+
+
+def test_auto_mode_sends_a_question_the_graph_can_answer_through_the_graph(docs, fake_llm):
+    fake_llm.plans = [good_plan()]
+    fake_llm.answer = quote_evidence
+    events, res = run("u_viewer", "What does the survey say about Opdivra?", mode="auto")
+    assert {e["key"]: e["status"] for e in events}["sparql"] != "skipped" and res["sparql"]      # the graph step ran (its rows are not the point here)
+    assert any(c["schema"] for c in fake_llm.calls)                                              # and the model was asked for a query
+    assert res["mode"] == "semantic" and res["mode_requested"] == "auto" and res["search"]["chosen_by"] == "router"
+    assert any("catalog entit" in r for r in res["search"]["reasons"])
+
+
+def test_the_path_shown_is_what_the_answer_was_written_from_not_only_what_was_planned(docs, fake_llm, l3_stores):
+    from layer3 import history
+    # evidence_path counts what was gathered: graph facts only, passages only, both, or nothing
+    ep = pipeline.evidence_path
+    assert ep([{"kind": "graph"}])["label"] == "graph only"
+    assert ep([{"kind": "graph"}, {"kind": "space"}])["label"] == "graph only"
+    assert ep([{"kind": "chunk"}])["label"] == "vector search only"
+    assert ep([{"kind": "graph"}, {"kind": "chunk"}]) == {"label": "semantic search (graph + vector)", "graph_facts": 1, "passages": 1}
+    assert ep([])["label"] == "no evidence found"
+    # an open question: planned and used are both vector search, and the history row says so
+    fake_llm.answer = quote_evidence
+    _, res = run("u_viewer", "Tell me about prescribing barriers", mode="auto")
+    assert res["evidence_path"]["label"] == "vector search only" and res["evidence_path"]["graph_facts"] == 0 and res["evidence_path"]["passages"] > 0
+    assert history.recent(user("u_viewer"))[0]["path"] == "vector search only"
+    # an entity question whose query returned nothing keeps its passages: planned graph + vector, used passages (and any graph rows)
+    fake_llm.plans = [good_plan()]
+    _, res = run("u_viewer", "What does the survey say about Opdivra?", mode="auto")
+    assert res["search"]["label"] == "semantic search (graph + vector)" and res["evidence_path"]["passages"] > 0
+    assert history.recent(user("u_viewer"))[0]["path"] == res["evidence_path"]["label"]
+
+
+def test_a_count_the_graph_answers_is_shown_as_graph_only(docs, fake_llm, l3_stores):
+    """The user saw 'vector + graph' in the history for 'how many documents are ingested?': planned that way (a count), but a counted answer
+    leaves the passages out, so what it rests on is the graph alone. The label now says what was used."""
+    fake_llm.plans = [plan([col("?count", "count_distinct", "?document")], [pat("?document", "Watson:documentTitle", "?title")])]
+    fake_llm.answer = lambda u: "SHORT: There are 2 documents. [E1]"
+    events, res = run("u_admin", "how many documents are ingested ?", mode="auto")
+    assert res["search"]["label"] == "semantic search (graph + vector)"                     # the plan: a count needs the graph
+    assert res["evidence_path"] == {"label": "graph only", "graph_facts": 1, "passages": 0}
+    assert not any(i["kind"] == "chunk" for i in last(events, "evidence")["data"]["items"])
+
+
+def test_a_forced_mode_is_still_honoured_and_marked_as_the_callers_choice(docs, fake_llm):
+    fake_llm.answer = quote_evidence
+    _, res = run("u_viewer", "What does the survey say about Opdivra?", mode="plain")       # the router alone would have used the graph
+    assert res["mode"] == "plain" and res["mode_requested"] == "plain" and res["search"]["chosen_by"] == "caller"
+
+
 def test_knowledge_space_questions_are_answered_from_live_facts(docs, fake_llm):
     fake_llm.plans = [plan([col("?name"), col("?count", "count_distinct", "?document")],
                            [pat("?space", "Watson:spaceName", "?name"), pat("?space", "Watson:containsDocument", "?document")],
@@ -763,6 +845,15 @@ def test_ask_streams_steps_then_the_answer(client, docs, fake_llm):
     events = [json.loads(x) for x in r.text.splitlines()]
     assert [e["step"] for e in events if e["step"] != "final" and e["status"] != "running"] == [1, 2, 3, 4, 5, 6, 7, 8]
     assert events[-1]["step"] == "final" and events[-1]["result"]["status"] == "answered"
+
+
+def test_a_request_without_a_mode_is_routed_by_its_question_and_a_bad_mode_is_refused(client, docs, fake_llm):
+    fake_llm.answer = quote_evidence
+    h = login(client, "u_viewer")
+    r = client.post("/api/l3/ask", json={"question": "Tell me about prescribing barriers"}, headers=h)
+    final = [json.loads(x) for x in r.text.splitlines()][-1]["result"]
+    assert final["mode"] == "plain" and final["mode_requested"] == "auto" and final["search"]["chosen_by"] == "router"
+    assert client.post("/api/l3/ask", json={"question": "hello", "mode": "magic"}, headers=h).status_code == 422
 
 
 def test_ask_needs_a_session_and_a_question_and_there_is_no_model_switch(client):

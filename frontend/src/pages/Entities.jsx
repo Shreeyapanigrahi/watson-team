@@ -9,7 +9,11 @@ const KINDS = ['Brand', 'Drug', 'DrugClass', 'Indication', 'TherapeuticArea', 'G
 export default function Entities() {
   const [kind, setKind] = useState('')
   const [q, setQ] = useState('')
+  const [used, setUsed] = useState(false)
   const rows = useAsync(() => api.l2Entities({ kind, q }), [kind, q])
+  // Hides the entities that no readable document mentions (they stay in the catalog; this only changes what is listed here).
+  const list = rows.data ? rows.data.entities.filter((e) => !used || e.documents > 0) : []
+  const hidden = rows.data ? rows.data.entities.length - list.length : 0
 
   return (
     <div className="stack">
@@ -32,12 +36,19 @@ export default function Entities() {
           </select>
           <label htmlFor="q" style={{ fontWeight: 600 }}>Search</label>
           <input id="q" type="search" value={q} placeholder="Name or synonym" onChange={(e) => setQ(e.target.value)} style={{ width: 240 }} />
+          <label className="check" htmlFor="used">
+            <input id="used" type="checkbox" checked={used} onChange={(e) => setUsed(e.target.checked)} /> Only entities with documents
+          </label>
         </div>
 
         <ErrorBox error={rows.error} onRetry={rows.reload} />
         {rows.loading && !rows.data && <Loading />}
-        {rows.data && rows.data.entities.length === 0 && <Empty title="No entity matches">Try a different name or clear the filter.</Empty>}
-        {rows.data && rows.data.entities.length > 0 && (
+        {rows.data && list.length === 0 && (
+          <Empty title="No entity matches">
+            {hidden ? 'None of the matching entities has a document you may read. Clear "Only entities with documents" to see them.' : 'Try a different name or clear the filter.'}
+          </Empty>
+        )}
+        {rows.data && list.length > 0 && (
           <div className="table-wrap">
             <table>
               <thead>
@@ -47,7 +58,7 @@ export default function Entities() {
                 </tr>
               </thead>
               <tbody>
-                {rows.data.entities.map((e) => (
+                {list.map((e) => (
                   <tr key={e.id}>
                     <td>
                       <Link to={`/entities/${encodeURIComponent(e.id)}`}>{e.label}</Link>
@@ -68,7 +79,7 @@ export default function Entities() {
             </table>
           </div>
         )}
-        {rows.data && <p className="doc-sub" style={{ marginTop: 8 }}>{rows.data.count} entities</p>}
+        {rows.data && <p className="doc-sub" style={{ marginTop: 8 }}>{list.length} entities{hidden ? ` (${hidden} with no document hidden)` : ''}</p>}
       </div>
     </div>
   )

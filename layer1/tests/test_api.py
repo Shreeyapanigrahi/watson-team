@@ -1,4 +1,6 @@
 """API tests with FastAPI's TestClient: the same calls the React UI makes."""
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -30,6 +32,31 @@ def upload(client, headers, path):
 
 def test_the_user_list_is_no_longer_public(client):
     assert client.get("/api/users").status_code == 404
+
+
+def test_the_built_ui_is_never_cached_and_can_be_reloaded_on_any_screen(tmp_path):
+    from fastapi import FastAPI
+    from layer1.api.main import UiFiles
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<html>Watson</html>", encoding="utf-8")
+    (tmp_path / "assets" / "app-abc123.js").write_text("console.log(1)", encoding="utf-8")
+    site = FastAPI()
+
+    @site.get("/api/ping")
+    def ping():
+        return {"ok": True}
+    site.mount("/", UiFiles(directory=tmp_path, html=True), name="ui")
+    c = TestClient(site)
+    home = c.get("/")
+    assert home.status_code == 200 and home.headers["cache-control"] == "no-cache"
+    for screen in ("/knowledge", "/documents/Watson%3ADoc_001", "/entities/Brand_opdivra"):
+        r = c.get(screen)
+        assert r.status_code == 200 and "Watson" in r.text and r.headers["cache-control"] == "no-cache", screen   # reloading a screen works
+    assert c.get("/assets/app-abc123.js").status_code == 200
+    assert "cache-control" not in c.get("/assets/app-abc123.js").headers or "no-cache" not in c.get("/assets/app-abc123.js").headers["cache-control"]
+    assert c.get("/assets/app-old.js").status_code == 404            # a missing script is not answered with the page
+    assert c.get("/api/nothing-here").status_code == 404             # nor is an unknown API path
+    assert c.get("/api/ping").json() == {"ok": True}
 
 
 def test_endpoints_require_a_token(client):
@@ -132,3 +159,46 @@ def test_expiry_scan_endpoint_and_stats(client, corpus):
     assert client.post("/api/expiry/scan", headers=admin).json()["moved_to_under_review"] == [uri]
     st = client.get("/api/stats", headers=admin).json()
     assert st["by_state"]["UNDER_REVIEW"] == 1 and st["by_state"]["ACTIVE"] == 0
+
+
+def test_an_admin_can_delete_a_document_for_good_and_nobody_else_can(client, corpus):
+    from layer1 import audit_log, config, lifecycle_manager as lm
+    admin, viewer, spoc = login(client, "u_admin"), login(client, "u_viewer"), login(client, "u_spoc")
+    first = upload(client, admin, corpus / "study_021.docx").json()
+    uri = first["document_uri"]
+    rec = lm.get_record(uri)
+    stored, staged = Path(rec["stored_path"]), lm.staging_path(uri)
+    assert stored.is_file() and staged.is_file() and rec["state"] == "UNDER_REVIEW"
+    # the viewer and the SPOC are refused and nothing changes; the refusal is audited
+    for headers in (viewer, spoc):
+        assert client.delete(f"/api/documents/{uri}", headers=headers).status_code == 403
+    assert client.delete(f"/api/documents/{uri}").status_code == 401
+    assert stored.is_file() and staged.is_file() and lm.get_state(uri) == "UNDER_REVIEW"
+    assert len(audit_log.read_events(uri, "ABAC_DENIED")) == 2
+    # the admin deletes it: record, uploaded file and its folder, parsed text are gone, and it is not listed or readable
+    r = client.delete(f"/api/documents/{uri}", headers=admin)
+    assert r.status_code == 200 and r.json() == {"document_uri": uri, "deleted": True, "removed": {"staged_text": True, "uploaded_file": True}}
+    assert not stored.exists() and not stored.parent.exists() and not staged.exists()
+    assert client.get(f"/api/documents/{uri}", headers=admin).status_code == 404
+    assert uri not in {d["document_uri"] for d in client.get("/api/documents", headers=admin).json()["documents"]}
+    assert client.delete(f"/api/documents/{uri}", headers=admin).status_code == 404            # a second delete finds nothing
+    assert (corpus / "study_021.docx").is_file()                                                # the source file is a copy: never touched
+    # the audit log keeps what it was and who deleted it
+    ev = audit_log.read_events(uri, "DOCUMENT_DELETED")
+    assert len(ev) == 1 and ev[0]["details"]["actor"] == "u_admin" and ev[0]["details"]["source_filename"] == "study_021.docx"
+    assert ev[0]["details"]["state"] == "UNDER_REVIEW" and ev[0]["details"]["sha256"]
+    assert len(audit_log.read_events(uri, "INGEST")) == 1                                       # its earlier history is still there
+    # the same file can be uploaded again (its duplicate-check entry went with it) and gets a new number, never the old one
+    again = upload(client, admin, corpus / "study_021.docx").json()
+    assert again["state"] == "UNDER_REVIEW" and again["dedup"]["verdict"] == "unique" and again["document_uri"] != uri
+
+
+def test_deleting_an_active_document_leaves_the_others_alone(client, corpus):
+    from layer1 import lifecycle_manager as lm
+    admin = login(client, "u_admin")
+    a = upload(client, admin, corpus / "study_021.docx").json()["document_uri"]
+    b = upload(client, admin, corpus / "study_001.pdf").json()["document_uri"]
+    for uri in (a, b):
+        client.post(f"/api/documents/{uri}/review", headers=admin, json={"approved": True, "sensitivity_level": "PUBLIC"})
+    assert client.delete(f"/api/documents/{a}", headers=admin).status_code == 200
+    assert lm.get_state(b) == "ACTIVE" and client.get("/api/catalog", headers=admin).json()["summary"]["active"] == 1

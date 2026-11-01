@@ -7,8 +7,11 @@ the user watches the same sequence the code runs:
   1 question   2 access check   3 entities and route   4 SPARQL by the LLM   5 entity mapping
   6 evidence and lineage   7 answer by the LLM   8 hallucination check and citations
 
-mode "semantic" is the full pipeline. mode "plain" is the plain-RAG baseline for the comparison the brief asks for: the same
-access check, then vector search on cosine similarity alone, no graph, no SPARQL, no entity mapping.
+mode "auto" (the default) lets the question choose its search (understand.choose_search, shown in step 3 with its reasons): the full
+pipeline when the question shows something the graph can answer, vector search alone for an open question about what the documents
+say. mode "semantic" forces the full pipeline. mode "plain" forces the plain-RAG baseline for the comparison the brief asks for: the
+same access check, then vector search on cosine similarity alone, no graph, no SPARQL, no entity mapping. The result's `mode` is the
+path that was taken ("semantic" or "plain"), `mode_requested` what was asked for.
 """
 import time
 
@@ -25,21 +28,33 @@ def _ev(step, key, title, status, data=None, started=None):
     return e
 
 
+def evidence_path(items: list) -> dict:
+    """What the answer was actually written from, which can differ from the plan: a count the graph returns leaves the passages out
+    (graph only), and a graph query that fails leaves only passages. `search` says what the router planned; this says what happened."""
+    passages = sum(1 for i in items if i["kind"] == "chunk")
+    facts = len(items) - passages
+    label = ("semantic search (graph + vector)" if passages and facts else "vector search only" if passages
+             else "graph only" if facts else "no evidence found")
+    return {"label": label, "graph_facts": facts, "passages": passages}
+
+
 def _doc_row(rec):
     return {"document_uri": rec["document_uri"], "title": rec["metadata"].get("extracted_title"),
             "study_type": rec["metadata"].get("study_type"), "sensitivity_level": rec["access"]["sensitivity_level"]}
 
 
-def ask(user: dict, question: str, mode: str = "semantic"):
+FORCED_SEARCH = {"semantic": "semantic search (graph + vector)", "plain": "vector search only"}
+
+
+def ask(user: dict, question: str, mode: str = "auto"):
     question = (question or "").strip()
     if not question:
         raise ValueError("The question is empty")
     if len(question) > 600:
         raise ValueError("The question is longer than 600 characters")
-    if mode not in ("semantic", "plain"):
-        raise ValueError("mode must be 'semantic' or 'plain'")
+    if mode not in ("auto", "semantic", "plain"):
+        raise ValueError("mode must be 'auto', 'semantic' or 'plain'")
     t_all, timings = time.time(), {}
-    semantic = mode == "semantic"
 
     # ---- 1 question
     t = time.time()
@@ -57,6 +72,13 @@ def ask(user: dict, question: str, mode: str = "semantic"):
     # ---- 3 entities and route
     t = time.time()
     und = understand.understand(question)
+    if mode == "auto":                                            # the question decides which search it goes through
+        search = understand.choose_search(question, und["entities"])
+    else:
+        search = {"mode": mode, "label": FORCED_SEARCH[mode], "chosen_by": "caller", "reasons": [f"chosen manually: {FORCED_SEARCH[mode]}"]}
+    used = search["mode"]                                         # the path actually taken: "semantic" or "plain"
+    semantic = used == "semantic"
+    und["search"] = search
     if semantic:                                                  # everyday words -> ontology terms, by meaning (shown in step 3, used in step 4)
         und["terms"] = semantic_terms = semantic_mod.match(question, und["entities"])
     timings["understand"] = int((time.time() - t) * 1000)
@@ -74,7 +96,7 @@ def ask(user: dict, question: str, mode: str = "semantic"):
                   {k: sparql_res.get(k) for k in ("status", "sparql", "columns", "row_count", "attempts", "reason")}
                   | {"rows": (sparql_res.get("rows") or [])[:15], "model": config.LLM_MODEL}, t)
     else:
-        yield _ev(4, "sparql", "SPARQL written by the local LLM", "skipped", {"reason": "Plain RAG does not use the graph."})
+        yield _ev(4, "sparql", "SPARQL written by the local LLM", "skipped", {"reason": "Vector search only: the graph is not used for this question."})
 
     # ---- 5 mapping
     mapped = None
@@ -84,12 +106,12 @@ def ask(user: dict, question: str, mode: str = "semantic"):
         timings["mapping"] = int((time.time() - t) * 1000)
         yield _ev(5, "mapping", "Question entities mapped to the knowledge space", "done" if mapped["mapped"] else "warn", mapped, t)
     else:
-        yield _ev(5, "mapping", "Question entities mapped to the knowledge space", "skipped", {"reason": "Plain RAG does not use the graph."})
+        yield _ev(5, "mapping", "Question entities mapped to the knowledge space", "skipped", {"reason": "Vector search only: the graph is not used for this question."})
 
     # ---- 6 evidence and lineage
     t = time.time()
     yield _ev(6, "evidence", "Evidence gathered, lineage traced", "running")
-    ev = evidence_mod.gather(user, sl, question, und["entities"], und["route"], sparql_res, mode)
+    ev = evidence_mod.gather(user, sl, question, und["entities"], und["route"], sparql_res, used)
     timings["evidence"] = int((time.time() - t) * 1000)
     yield _ev(6, "evidence", "Evidence gathered, lineage traced", "done" if ev["items"] else "warn",
               {"items": ev["items"], "lineage": ev["lineage"], "notes": ev["notes"]}, t)
@@ -136,7 +158,7 @@ def ask(user: dict, question: str, mode: str = "semantic"):
     else:
         status = "answered"
     result = {
-        "question": question, "mode": mode, "route": und["route"], "status": status,
+        "question": question, "mode": used, "mode_requested": mode, "search": search, "evidence_path": evidence_path(ev["items"]), "route": und["route"], "status": status,
         "short_answer": {"text": short["text"], "cites": short["cites"]} if short else None,
         "lines": [{"text": s["text"], "cites": s["cites"], "verdict": s["verdict"], "score": s["score"], "attributed": s["attributed"],
                    "checks": s["checks"]} for s in kept],
@@ -149,7 +171,7 @@ def ask(user: dict, question: str, mode: str = "semantic"):
         "timings_ms": {**timings, "total": int((time.time() - t_all) * 1000)},
         "withheld_documents": sl.stats["documents_withheld"],
     }
-    _record(user, question, mode, result, ev, cited_docs)
+    _record(user, question, used, mode, result, ev, cited_docs)
     yield {"step": "final", "result": result}
 
 
@@ -182,12 +204,12 @@ def _message(status, draft, sparql_res):
     return " ".join(notes)
 
 
-def _record(user, question, mode, result, ev, cited_docs):
+def _record(user, question, mode, requested, result, ev, cited_docs):
     chunks = [{"chunk_uri": c, "document_uri": i["documents"][0], "score": i.get("score", 0.0)}
               for i in ev["items"] if i["kind"] == "chunk" for c in i["chunks"]]
     if chunks:
         telemetry.record_search(user, question, chunks)          # what was handed to the model, so query Q10 audits Layer 3 too
     audit_log.log_event("QUERY", None, {"user_id": user["user_id"], "role": user["role"], "stage": "layer3_answer", "question": question,
-                                         "mode": mode, "route": result["route"], "status": result["status"], "cited_documents": cited_docs,
+                                         "mode": mode, "mode_requested": requested, "route": result["route"], "status": result["status"], "cited_documents": cited_docs,
                                          "evidence_items": len(ev["items"]), "risk": result["risk"]})
     history.add(user, result)

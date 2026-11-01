@@ -55,6 +55,17 @@ def test_ontology_endpoint_reports_the_brief_checks(client):
     assert all(c["ok"] for c in d["checks"]) and d["grounding_summary"]["unknown"] == 0
 
 
+def test_position_endpoint_follows_access(client, docs):
+    a, b = docs
+    assert client.get(f"/api/l2/documents/{a}/position").status_code == 401
+    analyst, viewer = login(client, "u_analyst"), login(client, "u_viewer")
+    r = client.get(f"/api/l2/documents/{b}/position", headers=analyst)
+    assert r.status_code == 200 and r.json()["enriched"] and r.json()["graph"]["nodes"] and a in {s["document_uri"] for s in r.json()["shared"]}
+    assert client.get(f"/api/l2/documents/{b}/position", headers=viewer).status_code == 403            # restricted: outside the viewer's access
+    assert client.get(f"/api/l2/documents/{a}/position", headers=viewer).status_code == 200
+    assert client.get("/api/l2/documents/Watson:Doc_999/position", headers=analyst).status_code == 404
+
+
 def test_entities_graph_and_spaces_follow_the_user(client, docs):
     a, b = docs
     viewer, analyst = login(client, "u_viewer"), login(client, "u_analyst")
@@ -77,13 +88,19 @@ def test_graph_filters_and_document_facts_over_http(client, docs):
     viewer, analyst = login(client, "u_viewer"), login(client, "u_analyst")
     nodes = lambda r: {n["id"] for n in r.json()["nodes"]}
     g = client.get("/api/l2/graph", params={"mode": "knowledge", "brand": "Brand_keytrava,Brand_opdivra"}, headers=analyst)
-    assert {a, b} <= nodes(g)                                                          # comma-separated values are alternatives
+    assert b in nodes(g) and a not in nodes(g)                                         # comma-separated values must all hold (AND): only B names both
     assert nodes(client.get("/api/l2/graph", params={"brand": "Brand_keytrava"}, headers=viewer)) == set()
     assert nodes(client.get("/api/l2/graph", params={"geography": "Geo_DE", "area": "TA_oncology"}, headers=viewer)) >= {a, "Geo_DE"}
     assert client.get("/api/l2/graph", params={"brand": "Geo_DE"}, headers=viewer).status_code == 422
     f = client.get("/api/l2/graph/filters", headers=viewer).json()
     assert [d["id"] for d in f["documents"]] == [a] and "Brand_keytrava" not in {x["id"] for x in f["brand"]}
     assert {"brand", "indication", "drug", "area", "geography", "relation"} <= set(f)
+    # the options follow the filters already chosen (same parameters as /graph); a wrong kind of id is a 422
+    keytrava = client.get("/api/l2/graph/filters", params={"brand": "Brand_keytrava"}, headers=analyst).json()
+    assert keytrava["matching"] == 1 and keytrava["total"] == 2 and [d["id"] for d in keytrava["documents"]] == [b]
+    unseen = client.get("/api/l2/graph/filters", params={"brand": "Brand_keytrava"}, headers=viewer).json()   # B is not readable by the viewer
+    assert unseen["matching"] == 0 and unseen["total"] == 1 and unseen["documents"] == []
+    assert client.get("/api/l2/graph/filters", params={"brand": "Geo_DE"}, headers=viewer).status_code == 422
     assert client.get(f"/api/l2/documents/{b}/facts", headers=viewer).status_code == 403
     facts = client.get(f"/api/l2/documents/{a}/facts", headers=viewer).json()
     assert facts["enriched"] and facts["facts"] and facts["counts"]["passages"] > 0

@@ -127,15 +127,20 @@ def build_router(current_user) -> APIRouter:
               entity: Optional[str] = None, limit: int = Query(80, ge=1, le=200),
               documents: Optional[str] = None, brand: Optional[str] = None, indication: Optional[str] = None, drug: Optional[str] = None,
               area: Optional[str] = None, geography: Optional[str] = None, relation: Optional[str] = None, user=Depends(current_user)):
-        """Filters are comma-separated ids ("Brand_opdivra,Brand_keytrava"); values of one filter are alternatives, different filters all apply."""
+        """Filters are comma-separated ids ("Brand_opdivra,Brand_keytrava"); every chosen value must hold (brand A AND brand B), except the documents, which are alternatives."""
         given = {"documents": documents, "brand": brand, "indication": indication, "drug": drug, "area": area, "geography": geography,
                  "relation": relation}
         filters = {k: [x.strip() for x in v.split(",")] for k, v in given.items() if v}
         return graph_view.graph(user, mode, space, entity, limit, filters)
 
     @r.get("/graph/filters")
-    def graph_filters(space: Optional[str] = None, user=Depends(current_user)):
-        return graph_view.graph_filters(user, space)
+    def graph_filters(space: Optional[str] = None,
+                      documents: Optional[str] = None, brand: Optional[str] = None, indication: Optional[str] = None, drug: Optional[str] = None,
+                      area: Optional[str] = None, geography: Optional[str] = None, relation: Optional[str] = None, user=Depends(current_user)):
+        """The options of every filter given the filters already chosen (same parameters as /graph): each filter's options follow the others."""
+        given = {"documents": documents, "brand": brand, "indication": indication, "drug": drug, "area": area, "geography": geography,
+                 "relation": relation}
+        return graph_view.graph_filters(user, space, {k: [x.strip() for x in v.split(",")] for k, v in given.items() if v})
 
     @r.get("/spaces")
     def spaces(user=Depends(current_user)):
@@ -145,6 +150,12 @@ def build_router(current_user) -> APIRouter:
     @r.get("/documents/{uri}/knowledge")
     def document_knowledge(uri: str, user=Depends(current_user)):
         return graph_view.document_knowledge(user, uri)
+
+    @r.get("/documents/{uri}/position")
+    def document_position(uri: str, user=Depends(current_user)):
+        """Where an approved document sits in the knowledge graph: its spaces and entities with before/after counts, the readable documents
+        that share its entities, what its enrichment added, and a small picture. Counts only documents the caller may read."""
+        return graph_view.document_position(user, uri)
 
     @r.get("/documents/{uri}/facts")
     def document_facts(uri: str, user=Depends(current_user)):

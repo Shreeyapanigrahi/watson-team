@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import DocumentFactsCard from '../DocumentFactsCard'
 import GraphView, { KIND_STYLE, Legend } from '../GraphView'
@@ -16,12 +16,23 @@ export default function KnowledgeSpace() {
   const [space, setSpace] = useState('')
   const [edgeLabels, setEdgeLabels] = useState(false)
   const [selected, setSelected] = useState(null)
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  // a link such as /knowledge?documents=Watson:Doc_001 opens with that document already chosen in the Document filter
+  const [params] = useSearchParams()
+  const [filters, setFilters] = useState(() => {
+    const docs = (params.get('documents') || '').split(',').map((x) => x.trim()).filter(Boolean)
+    return docs.length ? { ...EMPTY_FILTERS, documents: docs } : EMPTY_FILTERS
+  })
   const spaces = useAsync(() => api.l2Spaces(), [])
-  // what each filter can offer THIS user (only documents they may read), for the space chosen
-  const options = useAsync(() => (mode === 'knowledge' ? api.l2GraphFilters({ space }) : Promise.resolve(null)), [mode, space])
   const filterKey = JSON.stringify(filters)
+  // what each filter can offer THIS user (only documents they may read), for the space chosen and the OTHER filters already chosen,
+  // so the options and their counts change as you choose and no choice leads to an empty graph
+  const options = useAsync(
+    () => (mode === 'knowledge' ? api.l2GraphFilters({ space, ...filterParams(filters) }) : Promise.resolve(null)),
+    [mode, space, filterKey],
+  )
   const filtering = mode === 'knowledge' && anyFilter(filters)
+  // a new view of the graph (another filter, space or view) drops the node chosen before, so its panel never describes something no longer picked
+  useEffect(() => { setSelected(null) }, [mode, space, filterKey])
   const graph = useAsync(
     () => api.l2Graph({ mode, space: mode === 'knowledge' ? space : undefined, limit: 80, ...(mode === 'knowledge' ? filterParams(filters) : {}) }),
     [mode, space, filterKey],

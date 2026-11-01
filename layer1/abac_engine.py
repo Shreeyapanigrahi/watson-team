@@ -27,6 +27,7 @@ ROLE_ACTIONS = {
     "review": {"SPOC", "ADMIN"},        # the human-in-the-loop gate (SPOC only within their area)
     "archive": {"ADMIN"},
     "reinstate": {"ADMIN"},
+    "delete": {"ADMIN"},                # permanent: the record, the files, the graph facts and the vectors
     "expiry_scan": {"ADMIN"},
     "view_audit": {"ADMIN"},
     "create_space": {"SPOC", "ADMIN"},  # used by Layer 2

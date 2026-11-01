@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import DeleteDocument from '../DeleteDocument'
 import DocumentKnowledge from './DocumentKnowledge'
 import {
   Badge, Empty, ErrorBox, KV, Loading, Notice, ScoreBar, SensitivityBadge, StateBadge, Tabs, fmtDate, fmtDateTime, useAsync,
@@ -10,6 +11,7 @@ import {
 export default function DocumentDetail() {
   const { uri } = useParams()
   const { can } = useAuth()
+  const nav = useNavigate()
   const doc = useAsync(() => api.document(uri), [uri])
   const [tab, setTab] = useState('overview')
   const [flash, setFlash] = useState(null)
@@ -30,8 +32,9 @@ export default function DocumentDetail() {
   if (d.view_level === 'summary') return <Summary d={d} />
 
   const title = d.metadata.extracted_title || d.source_filename
-  const done = (msg) => {
+  const done = (msg, goTo) => {
     setFlash(msg)
+    if (goTo) setTab(goTo)                       // after an approval, open the Knowledge tab: it shows where the document landed in the graph
     doc.reload()
   }
 
@@ -51,7 +54,10 @@ export default function DocumentDetail() {
             {d.document_uri} · {d.source_filename} · uploaded {fmtDateTime(d.created_at)} by {d.uploaded_by}
           </p>
         </div>
-        <Lifecycle d={d} can={can} onDone={done} />
+        <div className="row" style={{ alignItems: 'flex-start', justifyContent: 'flex-end' }}>
+          <Lifecycle d={d} can={can} onDone={done} />
+          {can('delete') && <DeleteDocument large uri={d.document_uri} onDeleted={() => nav('/documents')} />}
+        </div>
       </div>
 
       {flash && <Notice tone="ok">{flash}</Notice>}
@@ -193,7 +199,7 @@ function ReviewPanel({ d, onDone }) {
         pii_override_reason: piiOverride ? piiReason : null,
         archive_superseded: archiveOld,
       })
-      onDone('Approved. The document is ACTIVE, with its access attributes, expiry date and quality score written.')
+      onDone('Approved. The document is ACTIVE, with its access attributes, expiry date and quality score written. It is now being added to the knowledge graph; its position is shown below.', 'knowledge')
     } catch (e) {
       setError(e)
     } finally {

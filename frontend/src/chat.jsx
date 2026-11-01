@@ -6,11 +6,11 @@ const Ctx = createContext(null)
 export const useChat = () => useContext(Ctx)
 
 /** The viewer's conversation with Watson, shared by the sidebar (New chat, Recent) and the chat page.
- *  Each turn holds one question and the run(s) of the Layer 3 pipeline for it. Watson answers every question on its own,
- *  so a thread is a list of independent questions, not a dialogue with memory. */
+ *  Each turn holds one question and the run of the Layer 3 pipeline for it. Watson answers every question on its own,
+ *  so a thread is a list of independent questions, not a dialogue with memory. The question chooses its own search (graph + vectors,
+ *  or vectors alone): the pipeline's router decides, the user is not asked. */
 export function ChatProvider({ children }) {
   const [thread, setThread] = useState([])
-  const [mode, setMode] = useState('semantic')
   const abort = useRef(null)
   const hist = useAsync(() => api.l3History(), [])
 
@@ -32,20 +32,14 @@ export function ChatProvider({ children }) {
     }
   }
 
-  const ask = async (question, useMode) => {
+  const ask = async (question) => {
     const q = question.trim()
-    const m = useMode || mode
     if (!q) return
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     abort.current = new AbortController()
-    setThread((th) => [...th, { id, question: q, mode: m, runs: {}, error: null }])
+    setThread((th) => [...th, { id, question: q, runs: {}, error: null }])
     try {
-      if (m === 'compare') {
-        await runOne(id, 'plain', q)
-        await runOne(id, 'semantic', q)
-      } else {
-        await runOne(id, m, q)
-      }
+      await runOne(id, 'auto', q)
     } catch (err) {
       if (err.name !== 'AbortError') setThread((th) => th.map((t) => (t.id === id ? { ...t, error: err } : t)))
     }
@@ -59,5 +53,5 @@ export function ChatProvider({ children }) {
   const stop = () => abort.current?.abort()
   const busy = thread.some((t) => Object.values(t.runs).some((r) => r.busy))
 
-  return <Ctx.Provider value={{ thread, mode, setMode, busy, ask, reset, stop, hist }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ thread, busy, ask, reset, stop, hist }}>{children}</Ctx.Provider>
 }

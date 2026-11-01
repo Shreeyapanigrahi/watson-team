@@ -44,7 +44,6 @@ export default function DataCatalog() {
 
 function Overview({ s, onBrowse }) {
   const c = s.counts
-  const q = s.upstream_quality || {}
   const rec = s.reconciliation || {}
   return (
     <div className="stack">
@@ -54,12 +53,6 @@ function Overview({ s, onBrowse }) {
         <div className="tile"><div className="tile-value">{n(c.columns + (s.extension?.extension_columns || 0))}</div><div className="tile-label">columns</div></div>
         <div className="tile"><div className="tile-value">{n(c.foreign_keys)}</div><div className="tile-label">foreign keys</div><div className="doc-sub">{n(c.foreign_keys_llm_generated)} AI-generated</div></div>
       </div>
-
-      <Notice tone="warn" title="Read this before trusting a link">
-        The supplied model rates itself "{q.status}": {q.summary} {q.data_modeler_notes}. {n(c.foreign_keys_llm_generated)} of its {n(c.foreign_keys)} foreign keys
-        are marked as AI-generated, and only {n(c.columns - c.columns_unclassified)} of {n(c.columns)} columns carry a classification tag. The
-        catalog holds table and column definitions only, with no data rows; the reference rows for our own brands, drugs and indications are the Watson additions.
-      </Notice>
 
       <div className="grid-2">
         <div className="card">

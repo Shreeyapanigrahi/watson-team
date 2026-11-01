@@ -30,6 +30,7 @@ REST API in `layer1/api/main.py` (FastAPI). Bearer token from `POST /api/login` 
 | `GET /api/documents/{uri}`, `/content` | Detail / chunks and text | per ABAC |
 | `POST /api/documents/{uri}/review` | Approve or reject | SPOC (own TA), ADMIN |
 | `POST /api/documents/{uri}/archive`, `/reinstate` | Lifecycle | ADMIN |
+| `DELETE /api/documents/{uri}` | Permanent delete, any state. Removes the record, the uploaded file (only if it is inside the uploads folder), the parsed text, the duplicate-check entry (the same file can be uploaded again), and, through a registered hook, the graph facts, vectors, mentions and enrichment status; waits behind any enrichment job already running. The audit log keeps one `DOCUMENT_DELETED` line (who, title, filename, state, SHA-256 of the text). The document number is never reused. If the Layer 2 cleanup fails nothing is removed and the call can be repeated. Not undoable | ADMIN (others get 403, audited) |
 | `GET /api/expiry/upcoming`, `POST /api/expiry/scan` | Retention | read: all; scan: ADMIN |
 | `GET /api/audit` | Audit log | ADMIN |
 | `GET /api/catalog`, `/api/stats`, `/api/chunking-comparison` | Catalog, dashboard, evidence | all |
@@ -62,10 +63,11 @@ Mounted in the same app at `/api/l2` (`layer2/api/router.py`). Every read is fil
 | Endpoint | Purpose | Who |
 |---|---|---|
 | `GET /status`, `/spaces`, `/entities`, `/entities/{id}`, `/graph`, `/ontology` | Knowledge space, entities, graph, ontology | all (ABAC-filtered) |
-| `GET /graph?documents=&brand=&indication=&drug=&area=&geography=&relation=` | Filtered knowledge graph. Comma-separated ids; OR within a filter, AND across filters; applied before `limit`; unknown or wrong-kind id gives 422 | all (ABAC-filtered) |
-| `GET /graph/filters?space=` | Options for each filter (documents, brands, indications, drugs, areas, geographies, relationships) with counts, from readable documents only | all (ABAC-filtered) |
+| `GET /graph?documents=&brand=&indication=&drug=&area=&geography=&relation=` | Filtered knowledge graph. Comma-separated ids; every chosen value must hold (AND within a filter and across filters; only `documents` are alternatives); applied before `limit`; unknown or wrong-kind id gives 422 | all (ABAC-filtered) |
+| `GET /graph/filters?space=&brand=&area=…` | Options for each filter (documents, brands, indications, drugs, areas, geographies, relationships) with counts, from readable documents only. Takes the same filter parameters as `/graph`: each filter's options follow the OTHER chosen filters and only what is named around them (the places where the chosen value occurs: a passage naming France, or the document's own links for a document-level value), and a filter never narrows itself, so no offered value gives an empty graph; its count is the number of documents that would match once it is chosen; a chosen value that no longer fits stays listed with 0. Values are combined with AND inside every filter except `documents` (brand A and brand B: documents that have both; `coMentionedWith` 14 and `containsDrug` 41 give 14), so a second value is offered only if it still leaves a document. Choosing a relationship keeps only the places that have it, so every other list narrows, and the relationship rows (`name`, `documents`) are the ones present around the other chosen filters and actually drawn in the graph. Also returns `matching` and `total` documents | all (ABAC-filtered) |
 | `GET /documents/{uri}/facts` | One document's facts as subject-relationship-object statements with source (document, passages, catalog), plus sentiment | per document access (403 and audit if unreadable) |
 | `GET /catalog/summary`, `/catalog/tables`, `/catalog/table`, `/catalog/search`, `/catalog/mappings` | Data catalog and every mapping into Watson | all |
+| `GET /documents/{uri}/position` | Where an approved document sits in the knowledge graph, from the graph itself: its spaces and entities with documents before and after it (also the entities its brand, drug or indication belongs to, with the one that implies them), the readable documents that share its brands, drugs, drug classes or indications, the Layer 1 version or near-duplicate verdict, what its enrichment added, and a small picture. Counts and lists include only documents the caller may read. A document not approved or not enriched yet answers `enriched: false` with its enrichment status | per document access (403 and audit if unreadable) |
 | `GET /documents/{uri}/knowledge` | Enrichment, mentions, sentiment, lineage for one document | per document access |
 | `POST /documents/{uri}/enrich`, `GET /enrichment` | Re-run or list enrichment | SPOC (own TA), ADMIN |
 | `GET /provisional`, `POST /provisional/{id}/approve`, `/reject` | Unrecognised names: alias, new entry, or reject | SPOC, ADMIN |
@@ -92,7 +94,7 @@ Run: `python -m layer2.backfill --reset` (rebuild), `python -m layer2.shacl_vali
 |---|---|---|
 | `GET /api/l3/status` | any user | Is the llama-server model server reachable and ready, and which model |
 | `POST /api/l3/model` | ADMIN | Switch to another installed model |
-| `POST /api/l3/ask` | any user | Body `{question, mode: semantic or plain}`. Streams NDJSON: one event per step (running, then done/skipped/failed) and a final `result`. Empty question: 422 |
+| `POST /api/l3/ask` | any user | Body `{question, mode}`; `mode` is optional and defaults to `auto`: the router chooses the search from the question (semantic search (graph + vector), or vector search alone for an open question) and step 3 shows the choice with its reasons; `semantic` or `plain` force one (neither the admin Ask page nor the viewer chat offers the choice any more). The result carries `mode` (the path taken), `mode_requested` and `search`. Streams NDJSON: one event per step (running, then done/skipped/failed) and a final `result`. Empty question: 422 |
 | `GET /api/l3/history` | any user (ADMIN sees all) | Past runs from `layer3/stores/runs.json` |
 | `GET /api/l3/tools`, `POST /api/l3/tools/{name}` | any user | MCP-shaped stubs: search_documents, lookup_entity, list_knowledge_spaces |
 

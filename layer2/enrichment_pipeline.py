@@ -184,6 +184,31 @@ def wait_idle(timeout: float = 120) -> bool:
     return not _pending
 
 
+def forget(document_uri: str) -> dict:
+    """The document is being deleted: remove everything Layer 2 holds for it (graph facts with their chunks and sentiment, vectors,
+    mentions, enrichment status, its place in provisional entities), then recompute brand links. The search-telemetry log is kept
+    (a record of what was searched), like the audit log. Raises if a store cannot be written, so the caller deletes nothing."""
+    kg = kgmod.get()
+    with kg.write() as g:
+        triples = triple_writer.remove_document(g, document_uri)
+        triple_writer.relink_brands(g)
+        triple_writer.prune_orphan_provisionals(g)
+    vectors = vector_index.get().remove_document(document_uri)
+    provisional = entity_resolver.drop_document(document_uri)
+    with LOCK:
+        for path in (_status_path(), _mentions_path()):
+            store = read_json(path, {})
+            if store.pop(document_uri, None) is not None:
+                write_json(path, store)
+    return {"triples_removed": triples, "vectors_removed": vectors, "provisional_entities_removed": provisional}
+
+
+def on_delete(document_uri: str) -> None:
+    """Registered with Layer 1's lifecycle manager. Runs on the enrichment worker, behind any job already queued, so a document that is
+    still being enriched is finished first and cannot be written back after it is deleted. Waits, and raises what forget raised."""
+    _submit(forget, document_uri).result(timeout=300)
+
+
 def on_state_change(document_uri: str, old: str, new: str, actor: str) -> None:
     """Registered with Layer 1's lifecycle manager. Layer 1 never imports Layer 2; it only calls what is registered."""
     if new == "ACTIVE":
@@ -194,3 +219,4 @@ def on_state_change(document_uri: str, old: str, new: str, actor: str) -> None:
 
 def install_hooks() -> None:
     lifecycle.register_state_hook(on_state_change)
+    lifecycle.register_delete_hook(on_delete)

@@ -78,6 +78,38 @@ def route(question: str, entities: list) -> dict:
     return {"route": chosen, "scores": scores, "reasons": reasons}
 
 
+def choose_search(question: str, entities: list) -> dict:
+    """Which search the question goes through, decided from the question alone (the user does not choose).
+
+      semantic  graph facts (a SPARQL query on the user's view of the graph) AND passages found by meaning
+      plain     vector search only: passages found by meaning, no graph, no SPARQL
+
+    The graph is used whenever the question shows something it can answer: a catalog entity, a count or list, a relation, comparison,
+    ranking or trend, or the platform's own structure. Only a question with none of these (an open question about what the documents say)
+    goes to vector search alone, where the graph has nothing to add and the SPARQL step would only cost time. When in doubt the graph
+    is used: the full path runs the same vector search and adds the graph's facts to it (it also weighs entity overlap and document
+    quality when ranking passages), so a doubtful question keeps the graph's facts instead of losing them. The reasons are shown in the UI.
+    (This is separate from `route`, whose label only says how evidence is ranked: 'how many documents are ingested?' names no entity,
+    so `route` calls it semantic_first, yet only the graph can count them.)"""
+    why = []
+    if entities:
+        names = ", ".join(sorted({e["label"] for e in entities})[:3])
+        why.append(f"names {len(entities)} catalog entit{'y' if len(entities) == 1 else 'ies'} ({names}), which the graph knows")
+    if COUNT_CUES.search(question):
+        why.append("asks for a count or a list, which the graph answers exactly")
+    rel = RELATION_CUES.findall(question)
+    if rel:
+        why.append(f"asks about a relation, comparison, ranking or trend ({', '.join(sorted({r.lower() for r in rel})[:4])})")
+    meta = META_CUES.findall(question)
+    if meta:
+        why.append(f"is about the platform's own structure ({', '.join(sorted({m.lower() for m in meta})[:4])})")
+    if why:
+        return {"mode": "semantic", "label": "semantic search (graph + vector)", "chosen_by": "router", "reasons": why}
+    return {"mode": "plain", "label": "vector search only", "chosen_by": "router",
+            "reasons": ["names no catalog entity and asks for no count, list, comparison, ranking or trend: an open question about what the "
+                        "documents say, so passages found by meaning answer it and the graph has nothing to add"]}
+
+
 def understand(question: str) -> dict:
     entities = extract_entities(question)
     r = route(question, entities)

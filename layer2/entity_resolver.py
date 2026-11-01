@@ -49,6 +49,26 @@ def reset_pending() -> int:
         return n
 
 
+def drop_document(document_uri: str) -> int:
+    """A document was deleted: take it (and its chunks) out of every provisional entity. A PENDING entity nobody mentions any more is
+    removed; a decided one (APPROVED or REJECTED) is a human decision and stays. Returns how many entities were removed."""
+    prefix = f"Watson:Chunk_{document_uri.split('_')[-1]}_"
+    with LOCK:
+        store = load_store()
+        gone = []
+        for pid, e in store["entities"].items():
+            if document_uri not in e["documents"] and not any(c.startswith(prefix) for c in e["chunks"]):
+                continue
+            e["documents"] = [d for d in e["documents"] if d != document_uri]
+            e["chunks"] = [c for c in e["chunks"] if not c.startswith(prefix)]
+            if e["status"] == "PENDING" and not e["documents"]:
+                gone.append(pid)
+        for pid in gone:
+            del store["entities"][pid]
+        _save(store)
+        return len(gone)
+
+
 def provisional_id(kind: str, text: str) -> str:
     return "Provisional_" + str(uuid.uuid5(_NAMESPACE, f"{kind}|{' '.join(text.lower().split())}"))
 

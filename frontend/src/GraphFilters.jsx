@@ -21,8 +21,8 @@ export const filterParams = (filters) => Object.fromEntries(FILTERS.map((f) => [
 function optionsFor(spec, data) {
   const rows = data?.[spec.key] || []
   if (spec.key === 'documents') return rows.map((d) => ({ id: d.id, label: d.title || d.id, hint: d.id.replace('Watson:', '') }))
-  if (spec.key === 'relation') return rows.map((r) => ({ id: r.name, label: r.name, hint: `${r.edges} edges` }))
-  return rows.map((e) => ({ id: e.id, label: e.label, hint: `${e.documents} doc${e.documents === 1 ? '' : 's'}` }))
+  if (spec.key === 'relation') return rows.map((r) => ({ id: r.name, label: r.name, hint: `${r.documents} doc${r.documents === 1 ? '' : 's'}`, none: r.documents === 0 }))
+  return rows.map((e) => ({ id: e.id, label: e.label, hint: `${e.documents} doc${e.documents === 1 ? '' : 's'}`, none: e.documents === 0 }))
 }
 
 function MultiPick({ spec, options, value, onChange }) {
@@ -56,9 +56,9 @@ function MultiPick({ spec, options, value, onChange }) {
         <ul className="pick-list">
           {shown.map((o) => (
             <li key={o.id}>
-              <label className="check">
+              <label className="check" title={o.none ? 'Chosen, but it does not fit the other filters: untick it or change them' : undefined}>
                 <input type="checkbox" checked={value.includes(o.id)} onChange={() => toggle(o.id)} />
-                <span>{o.label}</span> <span className="doc-sub">{o.hint}</span>
+                <span className={o.none ? 'pick-none' : undefined}>{o.label}</span> <span className="doc-sub">{o.hint}</span>
               </label>
             </li>
           ))}
@@ -113,9 +113,15 @@ export function FilterBar({ options, filters, setFilters }) {
           ))}
         </div>
       )}
+      {options && chips.length > 0 && (
+        <p className="doc-sub" style={{ margin: 0 }} role="status">
+          {options.matching} of {options.total} documents you may read match.
+        </p>
+      )}
       <p className="doc-sub" style={{ margin: 0 }}>
-        Values inside one filter are alternatives (brand A or brand B); different filters all have to hold (brand A and area X). The options are only
-        what the documents you may read contain.
+        Everything you choose has to hold: documents that have brand A and brand B, and area X. Only the Document filter works as a list of
+        alternatives (this document or that one). Each filter offers only what fits what you have chosen, with the number of documents, and
+        only documents you may read are counted.
       </p>
     </div>
   )

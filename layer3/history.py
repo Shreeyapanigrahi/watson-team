@@ -20,7 +20,7 @@ def add(user: dict, result: dict) -> None:
         store = read_json(_path(), {"runs": []})
         store["runs"].append({
             "time": audit_log.now_iso(), "user_id": user["user_id"], "role": user["role"], "question": result["question"],
-            "mode": result["mode"], "route": result["route"], "status": result["status"], "risk": result["risk"],
+            "mode": result["mode"], "path": (result.get("evidence_path") or {}).get("label"), "route": result["route"], "status": result["status"], "risk": result["risk"],
             "sparql": (result["sparql"] or {}).get("status"), "cited_documents": sorted({d for s in result["sources"] for d in s["documents"]}),
             "short_answer": (result["short_answer"] or {}).get("text"), "seconds": round(result["timings_ms"]["total"] / 1000, 1)})
         store["runs"] = store["runs"][-KEEP:]

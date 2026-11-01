@@ -5,6 +5,13 @@ import { Badge, Empty, ErrorBox, KV, Loading, SensitivityBadge, ScoreBar, fmtDat
 
 const link = (id, label) => <Link to={`/entities/${encodeURIComponent(id)}`}>{label}</Link>
 
+// Why a document is listed although it does not name the entity itself (the catalog says the entity it names is part of this one).
+const VIA = {
+  Drug: (v) => `about the brand ${v.label}, which contains this drug`,
+  DrugClass: (v) => `about the ${v.kind === 'Brand' ? 'brand' : 'drug'} ${v.label}, which belongs to this class`,
+  Indication: (v) => `about the sub-indication ${v.label}`,
+}
+
 export default function EntityDetail() {
   const { id } = useParams()
   const ent = useAsync(() => api.l2Entity(id), [id])
@@ -100,7 +107,7 @@ export default function EntityDetail() {
               <tbody>
                 {e.documents.map((d) => (
                   <tr key={d.document_uri}>
-                    <td><Link to={`/documents/${encodeURIComponent(d.document_uri)}`}>{d.title || d.document_uri}</Link></td>
+                    <td><Link to={`/documents/${encodeURIComponent(d.document_uri)}`}>{d.title || d.document_uri}</Link>{d.via && <div className="muted small">{VIA[e.kind]?.(d.via) || `counted through ${d.via.label}`}</div>}</td>
                     <td>{d.study_type}</td>
                     <td>{d.geography}</td>
                     <td>{fmtDate(d.date)}</td>

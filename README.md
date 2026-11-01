@@ -98,7 +98,7 @@ Sign in with a username and the password you set in step 4. There is one account
 | `viewer` | Vera Hoffmann | VIEWER | up to INTERNAL, Oncology, EU |
 | `analyst` | Arjun Mehta | ANALYST | up to RESTRICTED, Oncology + Cardiology, EU/US/APAC |
 | `spoc` | Lena Okafor | SPOC | all levels; can review Oncology documents |
-| `admin` | Marcus Webb | ADMIN | everything; archive, reinstate, expiry scan, audit log |
+| `admin` | Marcus Webb | ADMIN | everything; archive, reinstate, delete a document, expiry scan, audit log |
 
 Five wrong passwords lock that username for 5 minutes; a session lasts 8 hours; sign-ins, failures, sign-outs and password changes are in the audit log (admin).
 
